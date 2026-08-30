@@ -24,7 +24,7 @@ type PendingState = {
 export default function PlayerPage() {
   const [room, setRoom] = useState(DEFAULT_ROOM);
   const [roomInput, setRoomInput] = useState(DEFAULT_ROOM);
-  const [streamId, setStreamId] = useState("");
+  const [streamId, setStreamId] = useState("takokuri1");
   const [selectedHole, setSelectedHole] = useState(6);
   const [action, setAction] = useState<ActionKind>("turn");
   const [pending, setPending] = useState<PendingState | null>(null);
@@ -36,7 +36,7 @@ export default function PlayerPage() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const initialRoom = sanitizeRoom(params.get("room") || localStorage.getItem("tako-room") || DEFAULT_ROOM);
-    const initialStream = params.get("stream") || localStorage.getItem("tako-stream") || "";
+    const initialStream = params.get("stream") || localStorage.getItem("tako-stream") || "takokuri1";
     setRoom(initialRoom);
     setRoomInput(initialRoom);
     setStreamId(initialStream);
@@ -111,8 +111,8 @@ export default function PlayerPage() {
       {settingsOpen && (
         <section className="settings-drawer">
           <label><span>ルームID</span><div className="inline-field"><input value={roomInput} onChange={event => setRoomInput(event.target.value)} /><button onClick={applyRoom}>接続</button></div></label>
-          <label><span>VDO.Ninja Stream ID</span><input value={streamId} onChange={event => saveStream(event.target.value)} placeholder="例：tako-camera-01" /></label>
-          <div className="settings-note">調理場画面も同じルームIDにします。Stream IDが空の場合はシミュレーション映像を表示します。</div>
+          <label><span>VDO.Ninja Stream ID</span><input value={streamId} onChange={event => saveStream(event.target.value)} placeholder="takokuri1" /></label>
+          <div className="settings-note">標準映像は takokuri1 です。調理場画面も同じルームIDにします。Stream IDが空の場合はシミュレーション映像を表示します。</div>
         </section>
       )}
 
