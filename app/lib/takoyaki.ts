@@ -17,10 +17,11 @@ export interface SignalMessage {
 export interface HolePosition { id: number; x: number; y: number }
 
 export const HOLES: HolePosition[] = [
-  { id: 1, x: 23, y: 23 }, { id: 2, x: 41, y: 21 }, { id: 3, x: 59, y: 21 }, { id: 4, x: 77, y: 23 },
-  { id: 5, x: 21, y: 41 }, { id: 6, x: 40, y: 40 }, { id: 7, x: 60, y: 40 }, { id: 8, x: 79, y: 41 },
-  { id: 9, x: 21, y: 59 }, { id: 10, x: 40, y: 60 }, { id: 11, x: 60, y: 60 }, { id: 12, x: 79, y: 59 },
-  { id: 13, x: 23, y: 77 }, { id: 14, x: 41, y: 79 }, { id: 15, x: 59, y: 79 }, { id: 16, x: 77, y: 77 },
+  { id: 1, x: 20, y: 14 }, { id: 2, x: 40, y: 14 }, { id: 3, x: 60, y: 14 }, { id: 4, x: 80, y: 14 },
+  { id: 5, x: 20, y: 32 }, { id: 6, x: 40, y: 32 }, { id: 7, x: 60, y: 32 }, { id: 8, x: 80, y: 32 },
+  { id: 9, x: 20, y: 50 }, { id: 10, x: 40, y: 50 }, { id: 11, x: 60, y: 50 }, { id: 12, x: 80, y: 50 },
+  { id: 13, x: 20, y: 68 }, { id: 14, x: 40, y: 68 }, { id: 15, x: 60, y: 68 }, { id: 16, x: 80, y: 68 },
+  { id: 17, x: 20, y: 86 }, { id: 18, x: 40, y: 86 }, { id: 19, x: 60, y: 86 }, { id: 20, x: 80, y: 86 },
 ];
 
 export const ACTIONS: Record<ActionKind, { label: string; short: string; instruction: string }> = {

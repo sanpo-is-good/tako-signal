@@ -20,7 +20,7 @@ export default function Home() {
 
         <div className="hero-plate" aria-hidden="true">
           <div className="plate-grid miniature-grid">
-            {Array.from({ length: 16 }, (_, index) => (
+            {Array.from({ length: 20 }, (_, index) => (
               <span className={index === 5 ? "mini-hole active" : "mini-hole"} key={index} />
             ))}
           </div>

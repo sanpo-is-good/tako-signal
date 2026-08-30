@@ -158,7 +158,7 @@ export default function PlayerPage() {
           </div>
 
           <div className="hole-keypad">
-            {Array.from({ length: 16 }, (_, index) => index + 1).map(hole => (
+            {Array.from({ length: 20 }, (_, index) => index + 1).map(hole => (
               <button className={selectedHole === hole ? "active" : ""} key={hole} onClick={() => setSelectedHole(hole)} aria-label={`穴 ${hole}`}>
                 {String(hole).padStart(2, "0")}
               </button>
