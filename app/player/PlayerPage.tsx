@@ -3,14 +3,20 @@
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ConnectionPill } from "../components/ConnectionPill";
+import { PlayerControls } from "../components/PlayerControls";
 import { SignalPlate } from "../components/SignalPlate";
 import { useSignalChannel } from "../hooks/useSignalChannel";
 import {
   ACTIONS,
+  CONTROL_ACTIONS,
   DEFAULT_ROOM,
+  HOLE_OFFSETS_KEY,
   createMessage,
+  parseHoleOffsets,
   sanitizeRoom,
   type ActionKind,
+  type GameMode,
+  type HoleOffsets,
   type SignalMessage,
 } from "../lib/takoyaki";
 
@@ -18,6 +24,7 @@ type PendingState = {
   requestId: string;
   hole: number;
   action: ActionKind;
+  gameMode: GameMode;
   status: "sending" | "accepted";
 };
 
@@ -26,7 +33,10 @@ export default function PlayerPage() {
   const [roomInput, setRoomInput] = useState(DEFAULT_ROOM);
   const [streamId, setStreamId] = useState("takokuri1");
   const [selectedHole, setSelectedHole] = useState(6);
-  const [action, setAction] = useState<ActionKind>("turn");
+  const [mode, setMode] = useState<GameMode>("control");
+  const [action, setAction] = useState<ActionKind>("batter");
+  const [recipeProgress, setRecipeProgress] = useState<ActionKind[]>([]);
+  const [holeOffsets, setHoleOffsets] = useState<HoleOffsets>({});
   const [pending, setPending] = useState<PendingState | null>(null);
   const [lastResult, setLastResult] = useState<{ hole: number; status: "completed" | "skipped" } | null>(null);
   const [kitchenSeen, setKitchenSeen] = useState(0);
@@ -40,6 +50,17 @@ export default function PlayerPage() {
     setRoom(initialRoom);
     setRoomInput(initialRoom);
     setStreamId(initialStream);
+    setHoleOffsets(parseHoleOffsets(localStorage.getItem(HOLE_OFFSETS_KEY)));
+    const savedMode = localStorage.getItem("tako-game-mode");
+    if (savedMode === "control" || savedMode === "mischief") {
+      setMode(savedMode);
+      setAction(savedMode === "control" ? "batter" : "mischiefSpin");
+    }
+    const syncOffsets = (event: StorageEvent) => {
+      if (event.key === HOLE_OFFSETS_KEY) setHoleOffsets(parseHoleOffsets(event.newValue));
+    };
+    window.addEventListener("storage", syncOffsets);
+    return () => window.removeEventListener("storage", syncOffsets);
   }, []);
 
   const onMessage = useCallback((message: SignalMessage) => {
@@ -55,6 +76,9 @@ export default function PlayerPage() {
       setPending(current => {
         if (!current || current.requestId !== message.requestId) return current;
         setLastResult({ hole: current.hole, status: outcome });
+        if (outcome === "completed" && current.gameMode === "control" && CONTROL_ACTIONS.includes(current.action)) {
+          setRecipeProgress(items => items.includes(current.action) ? items : [...items, current.action]);
+        }
         return null;
       });
     }
@@ -70,10 +94,17 @@ export default function PlayerPage() {
 
   const submit = () => {
     if (pending) return;
-    const message = createMessage("request", "player", room, { hole: selectedHole, action });
-    setPending({ requestId: message.id, hole: selectedHole, action, status: "sending" });
+    const message = createMessage("request", "player", room, { hole: selectedHole, action, gameMode: mode });
+    setPending({ requestId: message.id, hole: selectedHole, action, gameMode: mode, status: "sending" });
     setLastResult(null);
     send(message);
+  };
+
+  const changeMode = (nextMode: GameMode) => {
+    setMode(nextMode);
+    setAction(nextMode === "control" ? "batter" : "mischiefSpin");
+    setLastResult(null);
+    localStorage.setItem("tako-game-mode", nextMode);
   };
 
   const applyRoom = () => {
@@ -94,8 +125,8 @@ export default function PlayerPage() {
     if (pending) return `穴 ${pending.hole}：光の指示を送信中`;
     if (lastResult?.status === "completed") return `穴 ${lastResult.hole}：完了しました`;
     if (lastResult?.status === "skipped") return `穴 ${lastResult.hole}：今回はスキップ`;
-    return "穴と動作を選んでください";
-  }, [pending, lastResult]);
+    return mode === "control" ? "レシピの一手と穴を選んでください" : "邪魔の合図と穴を選んでください";
+  }, [pending, lastResult, mode]);
 
   return (
     <main className="app-shell player-shell">
@@ -130,6 +161,7 @@ export default function PlayerPage() {
             activeAction={pending?.action}
             interactive
             onSelect={setSelectedHole}
+            holeOffsets={holeOffsets}
           />
 
           <div className={`activity-banner ${pending ? "is-busy" : ""} ${lastResult?.status || ""}`}>
@@ -138,44 +170,18 @@ export default function PlayerPage() {
           </div>
         </div>
 
-        <aside className="control-panel">
-          <div className="control-step">
-            <span className="step-index">01</span>
-            <div><p className="micro-label">SELECT ACTION</p><h2>動作を選ぶ</h2></div>
-          </div>
-
-          <div className="action-tabs">
-            {(Object.keys(ACTIONS) as ActionKind[]).map(kind => (
-              <button className={action === kind ? "active" : ""} key={kind} onClick={() => setAction(kind)}>
-                <span>{ACTIONS[kind].short}</span>{ACTIONS[kind].label}
-              </button>
-            ))}
-          </div>
-
-          <div className="control-step second-step">
-            <span className="step-index">02</span>
-            <div><p className="micro-label">SELECT POSITION</p><h2>穴を選ぶ</h2></div>
-          </div>
-
-          <div className="hole-keypad">
-            {Array.from({ length: 20 }, (_, index) => index + 1).map(hole => (
-              <button className={selectedHole === hole ? "active" : ""} key={hole} onClick={() => setSelectedHole(hole)} aria-label={`穴 ${hole}`}>
-                {String(hole).padStart(2, "0")}
-              </button>
-            ))}
-          </div>
-
-          <div className="command-summary">
-            <span>COMMAND</span>
-            <strong>HOLE {String(selectedHole).padStart(2, "0")} / {ACTIONS[action].short}</strong>
-          </div>
-
-          <button className="send-command" onClick={submit} disabled={Boolean(pending)}>
-            <span>{pending ? "実行を待っています" : "光の指示を送る"}</span><b aria-hidden="true">→</b>
-          </button>
-
-          <Link className="open-kitchen-link" href={`/kitchen?room=${room}`} target="_blank">調理場画面を別タブで開く ↗</Link>
-        </aside>
+        <PlayerControls
+          mode={mode}
+          action={action}
+          selectedHole={selectedHole}
+          pending={Boolean(pending)}
+          progress={recipeProgress}
+          room={room}
+          onModeChange={changeMode}
+          onActionChange={setAction}
+          onHoleChange={setSelectedHole}
+          onSend={submit}
+        />
       </section>
     </main>
   );

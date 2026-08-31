@@ -1,6 +1,6 @@
 "use client";
 
-import { ACTIONS, HOLES, type ActionKind } from "../lib/takoyaki";
+import { ACTIONS, HOLES, type ActionKind, type HoleOffsets } from "../lib/takoyaki";
 
 interface PlateProps {
   activeHole?: number;
@@ -10,6 +10,8 @@ interface PlateProps {
   interactive?: boolean;
   calibration?: boolean;
   onSelect?: (hole: number) => void;
+  holeOffsets?: HoleOffsets;
+  onHolePositionChange?: (hole: number, x: number, y: number) => void;
   transform?: { x: number; y: number; scale: number; rotate: number };
 }
 
@@ -21,6 +23,8 @@ export function SignalPlate({
   interactive = false,
   calibration = false,
   onSelect,
+  holeOffsets = {},
+  onHolePositionChange,
   transform,
 }: PlateProps) {
   const hasVideo = Boolean(streamId?.trim());
@@ -55,13 +59,27 @@ export function SignalPlate({
             const isActive = activeHole === hole.id;
             const isSelected = selectedHole === hole.id;
             const Element = interactive ? "button" : "div";
+            const offset = holeOffsets[hole.id] || { x: 0, y: 0 };
+            const left = hole.x + offset.x;
+            const top = hole.y + offset.y;
             return (
               <Element
                 type={interactive ? "button" : undefined}
-                className={`plate-hole ${isActive ? `cue-active cue-${activeAction}` : ""} ${isSelected ? "selected" : ""} ${calibration ? "calibration-hole" : ""}`}
-                style={{ left: `${hole.x}%`, top: `${hole.y}%` }}
+                className={`plate-hole ${isActive ? `cue-active cue-${ACTIONS[activeAction].effect}` : ""} ${isSelected ? "selected" : ""} ${calibration ? "calibration-hole" : ""} ${onHolePositionChange ? "position-editable" : ""}`}
+                style={{ left: `${left}%`, top: `${top}%` }}
                 key={hole.id}
                 onClick={interactive ? () => onSelect?.(hole.id) : undefined}
+                onPointerDown={onHolePositionChange ? event => { event.currentTarget.setPointerCapture(event.pointerId); onSelect?.(hole.id); } : undefined}
+                onPointerMove={onHolePositionChange ? event => {
+                  if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
+                  const layer = event.currentTarget.parentElement;
+                  if (!layer) return;
+                  const rect = layer.getBoundingClientRect();
+                  const nextX = Math.min(96, Math.max(4, ((event.clientX - rect.left) / rect.width) * 100));
+                  const nextY = Math.min(96, Math.max(4, ((event.clientY - rect.top) / rect.height) * 100));
+                  onHolePositionChange(hole.id, nextX - hole.x, nextY - hole.y);
+                } : undefined}
+                onPointerUp={onHolePositionChange ? event => event.currentTarget.releasePointerCapture(event.pointerId) : undefined}
                 aria-label={interactive ? `穴 ${hole.id}を選択` : undefined}
               >
                 <span className="takoyaki-ball" />

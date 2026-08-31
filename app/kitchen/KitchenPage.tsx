@@ -8,9 +8,12 @@ import { useSignalChannel } from "../hooks/useSignalChannel";
 import {
   ACTIONS,
   DEFAULT_ROOM,
+  HOLE_OFFSETS_KEY,
   createMessage,
+  parseHoleOffsets,
   sanitizeRoom,
   type ActionKind,
+  type HoleOffsets,
   type SignalMessage,
 } from "../lib/takoyaki";
 
@@ -29,6 +32,7 @@ export default function KitchenPage() {
   const [testHole, setTestHole] = useState(6);
   const [testAction, setTestAction] = useState<ActionKind>("turn");
   const [transform, setTransform] = useState<TransformState>(DEFAULT_TRANSFORM);
+  const [holeOffsets, setHoleOffsets] = useState<HoleOffsets>({});
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
@@ -41,6 +45,15 @@ export default function KitchenPage() {
       try { setTransform({ ...DEFAULT_TRANSFORM, ...JSON.parse(savedTransform) }); } catch { /* use defaults */ }
     }
   }, []);
+  useEffect(() => {
+    setHoleOffsets(parseHoleOffsets(localStorage.getItem(HOLE_OFFSETS_KEY)));
+    const syncOffsets = (event: StorageEvent) => {
+      if (event.key === HOLE_OFFSETS_KEY) setHoleOffsets(parseHoleOffsets(event.newValue));
+    };
+    window.addEventListener("storage", syncOffsets);
+    return () => window.removeEventListener("storage", syncOffsets);
+  }, []);
+
 
   const onMessage = useCallback((message: SignalMessage) => {
     if (message.role === "player" && message.kind === "request" && message.hole && message.action) {
@@ -66,6 +79,7 @@ export default function KitchenPage() {
       requestId: next.id,
       hole: next.hole,
       action: next.action,
+      gameMode: next.gameMode,
     }));
   }, [paused, current, queue, room, send]);
 
@@ -75,6 +89,7 @@ export default function KitchenPage() {
       requestId: current.id,
       hole: current.hole,
       action: current.action,
+      gameMode: current.gameMode,
     }));
     setHistory(items => [{ ...current, kind }, ...items].slice(0, 6));
     setCurrent(null);
@@ -110,6 +125,12 @@ export default function KitchenPage() {
     const next = { ...transform, [key]: value };
     setTransform(next);
     localStorage.setItem("tako-projector-transform", JSON.stringify(next));
+  };
+
+  const updateHoleOffset = (hole: number, x: number, y: number) => {
+    const next = { ...holeOffsets, [hole]: { x, y } };
+    setHoleOffsets(next);
+    localStorage.setItem(HOLE_OFFSETS_KEY, JSON.stringify(next));
   };
 
   const togglePause = () => {
@@ -160,6 +181,8 @@ export default function KitchenPage() {
             calibration={calibration}
             interactive={calibration}
             onSelect={setTestHole}
+            holeOffsets={holeOffsets}
+            onHolePositionChange={calibration ? updateHoleOffset : undefined}
             transform={transform}
           />
           {paused && <div className="projection-paused">PAUSED</div>}
@@ -176,6 +199,7 @@ export default function KitchenPage() {
             <p className="micro-label">CURRENT SIGNAL</p>
             {current ? (
               <>
+                <span className={`request-mode request-mode-${current.gameMode || "control"}`}>{current.gameMode === "mischief" ? "おまかせ＋邪魔" : "完全操縦"}</span>
                 <div className="command-big"><span>穴</span><strong>{String(current.hole).padStart(2, "0")}</strong><em>{ACTIONS[current.action!].label}</em></div>
                 <p>{ACTIONS[current.action!].instruction}</p>
               </>
@@ -207,12 +231,13 @@ export default function KitchenPage() {
             {calibration && (
               <div className="calibration-controls">
                 <div className="test-actions">
-                  {(Object.keys(ACTIONS) as ActionKind[]).map(kind => <button className={testAction === kind ? "active" : ""} key={kind} onClick={() => setTestAction(kind)}>{ACTIONS[kind].short}</button>)}
+                  {(["batter", "turn", "serve"] as ActionKind[]).map(kind => <button className={testAction === kind ? "active" : ""} key={kind} onClick={() => setTestAction(kind)}>{ACTIONS[kind].short}</button>)}
                 </div>
                 <label><span>左右 <b>{transform.x}px</b></span><input type="range" min="-240" max="240" value={transform.x} onChange={event => updateTransform("x", Number(event.target.value))} /></label>
                 <label><span>上下 <b>{transform.y}px</b></span><input type="range" min="-160" max="160" value={transform.y} onChange={event => updateTransform("y", Number(event.target.value))} /></label>
                 <label><span>大きさ <b>{transform.scale.toFixed(2)}</b></span><input type="range" min="0.55" max="1.45" step="0.01" value={transform.scale} onChange={event => updateTransform("scale", Number(event.target.value))} /></label>
                 <label><span>回転 <b>{transform.rotate}°</b></span><input type="range" min="-25" max="25" value={transform.rotate} onChange={event => updateTransform("rotate", Number(event.target.value))} /></label>
+                <Link className="open-debug-link" href="/debug" target="_blank">20穴を個別に調整する ↗</Link>
                 <button className="reset-calibration" onClick={() => { setTransform(DEFAULT_TRANSFORM); localStorage.removeItem("tako-projector-transform"); }}>位置をリセット</button>
               </div>
             )}
