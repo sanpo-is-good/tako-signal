@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { ConnectionPill } from "../components/ConnectionPill";
 import { PlayerControls } from "../components/PlayerControls";
 import { SignalPlate } from "../components/SignalPlate";
@@ -17,15 +17,11 @@ import {
   type ActionKind,
   type GameMode,
   type HoleOffsets,
-  type SignalMessage,
 } from "../lib/takoyaki";
 
-type PendingState = {
-  requestId: string;
+type SentSignal = {
   hole: number;
   action: ActionKind;
-  gameMode: GameMode;
-  status: "sending" | "accepted";
 };
 
 export default function PlayerPage() {
@@ -37,11 +33,8 @@ export default function PlayerPage() {
   const [action, setAction] = useState<ActionKind>("batter");
   const [recipeProgress, setRecipeProgress] = useState<ActionKind[]>([]);
   const [holeOffsets, setHoleOffsets] = useState<HoleOffsets>({});
-  const [pending, setPending] = useState<PendingState | null>(null);
-  const [lastResult, setLastResult] = useState<{ hole: number; status: "completed" | "skipped" } | null>(null);
-  const [kitchenSeen, setKitchenSeen] = useState(0);
+  const [sentSignal, setSentSignal] = useState<SentSignal | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [, setClock] = useState(0);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -63,48 +56,41 @@ export default function PlayerPage() {
     return () => window.removeEventListener("storage", syncOffsets);
   }, []);
 
-  const onMessage = useCallback((message: SignalMessage) => {
-    if (message.role === "kitchen" && message.kind === "presence") setKitchenSeen(Date.now());
-    if (message.kind === "accepted" && message.requestId) {
-      setPending(current => {
-        if (!current || current.requestId !== message.requestId) return current;
-        return { ...current, status: "accepted" };
-      });
-    }
-    if ((message.kind === "completed" || message.kind === "skipped") && message.requestId) {
-      const outcome = message.kind;
-      setPending(current => {
-        if (!current || current.requestId !== message.requestId) return current;
-        setLastResult({ hole: current.hole, status: outcome });
-        if (outcome === "completed" && current.gameMode === "control" && CONTROL_ACTIONS.includes(current.action)) {
-          setRecipeProgress(items => items.includes(current.action) ? items : [...items, current.action]);
-        }
-        return null;
-      });
-    }
-  }, []);
-
-  const { connection, send } = useSignalChannel(room, onMessage);
-  const kitchenOnline = Date.now() - kitchenSeen < 8000;
-
   useEffect(() => {
-    const timer = setInterval(() => setClock(Date.now()), 2000);
-    return () => clearInterval(timer);
-  }, []);
+    if (!sentSignal) return;
+    const timer = window.setTimeout(() => setSentSignal(null), 1600);
+    return () => window.clearTimeout(timer);
+  }, [sentSignal]);
+
+  const { connection, send } = useSignalChannel(room, () => {});
 
   const submit = () => {
-    if (pending) return;
     const message = createMessage("request", "player", room, { hole: selectedHole, action, gameMode: mode });
-    setPending({ requestId: message.id, hole: selectedHole, action, gameMode: mode, status: "sending" });
-    setLastResult(null);
     send(message);
+    setSentSignal({ hole: selectedHole, action });
+
+    if (mode === "control" && CONTROL_ACTIONS.includes(action)) {
+      setRecipeProgress(items => items.includes(action) ? items : [...items, action]);
+      const index = CONTROL_ACTIONS.indexOf(action);
+      const next = CONTROL_ACTIONS[index + 1];
+      if (next) setAction(next);
+    }
   };
 
   const changeMode = (nextMode: GameMode) => {
     setMode(nextMode);
     setAction(nextMode === "control" ? "batter" : "mischiefSpin");
-    setLastResult(null);
+    setRecipeProgress([]);
+    setSentSignal(null);
     localStorage.setItem("tako-game-mode", nextMode);
+  };
+
+  const changeHole = (hole: number) => {
+    if (hole !== selectedHole && mode === "control") {
+      setRecipeProgress([]);
+      setAction("batter");
+    }
+    setSelectedHole(hole);
   };
 
   const applyRoom = () => {
@@ -120,19 +106,11 @@ export default function PlayerPage() {
     localStorage.setItem("tako-stream", value);
   };
 
-  const statusText = useMemo(() => {
-    if (pending?.status === "accepted") return `穴 ${pending.hole}：職人が実行中`;
-    if (pending) return `穴 ${pending.hole}：光の指示を送信中`;
-    if (lastResult?.status === "completed") return `穴 ${lastResult.hole}：完了しました`;
-    if (lastResult?.status === "skipped") return `穴 ${lastResult.hole}：今回はスキップ`;
-    return mode === "control" ? "レシピの一手と穴を選んでください" : "邪魔の合図と穴を選んでください";
-  }, [pending, lastResult, mode]);
-
   return (
-    <main className="app-shell player-shell">
+    <main className="app-shell player-shell ipad-player">
       <header className="app-header">
         <Link href="/" className="wordmark"><span className="wordmark-dot" />TAKO SIGNAL</Link>
-        <div className="header-center"><span>PLAYER</span><b>/</b><span>ROOM {room.toUpperCase()}</span></div>
+        <div className="header-center"><span>TOUCH PLAYER</span><b>/</b><span>ROOM {room.toUpperCase()}</span></div>
         <div className="header-actions">
           <ConnectionPill connection={connection} />
           <button className="icon-button" onClick={() => setSettingsOpen(value => !value)} aria-label="設定を開く">⚙</button>
@@ -143,30 +121,33 @@ export default function PlayerPage() {
         <section className="settings-drawer">
           <label><span>ルームID</span><div className="inline-field"><input value={roomInput} onChange={event => setRoomInput(event.target.value)} /><button onClick={applyRoom}>接続</button></div></label>
           <label><span>VDO.Ninja Stream ID</span><input value={streamId} onChange={event => saveStream(event.target.value)} placeholder="takokuri1" /></label>
-          <div className="settings-note">標準映像は takokuri1 です。調理場画面も同じルームIDにします。Stream IDが空の場合はシミュレーション映像を表示します。</div>
+          <div className="settings-note">位置調整画面と投影画面も同じルームIDを使います。</div>
         </section>
       )}
 
       <section className="player-workspace">
         <div className="live-panel">
           <div className="panel-heading">
-            <div><p className="micro-label">LIVE / OSAKA KITCHEN</p><h1>焼き場のいま</h1></div>
-            <span className={`kitchen-presence ${kitchenOnline ? "present" : ""}`}><i />{kitchenOnline ? "職人接続中" : "職人画面を待機中"}</span>
+            <div><p className="micro-label">LIVE TAKOYAKI</p><h1>映像を見て、光で動かす</h1></div>
+            <span className="touch-guide">穴をタップして選べます</span>
           </div>
 
           <SignalPlate
             streamId={streamId}
             selectedHole={selectedHole}
-            activeHole={pending?.hole}
-            activeAction={pending?.action}
+            activeHole={sentSignal?.hole}
+            activeAction={sentSignal?.action}
             interactive
-            onSelect={setSelectedHole}
+            onSelect={changeHole}
             holeOffsets={holeOffsets}
           />
 
-          <div className={`activity-banner ${pending ? "is-busy" : ""} ${lastResult?.status || ""}`}>
-            <span className="activity-index">{pending ? "●" : lastResult ? "✓" : "○"}</span>
-            <div><small>STATUS</small><strong>{statusText}</strong></div>
+          <div className={`activity-banner touch-status ${sentSignal ? "is-busy" : ""}`}>
+            <span className="activity-index">{sentSignal ? "✓" : "○"}</span>
+            <div>
+              <small>{sentSignal ? "SIGNAL SENT" : "READY"}</small>
+              <strong>{sentSignal ? `穴 ${sentSignal.hole}を「${ACTIONS[sentSignal.action].label}」で光らせました` : "ライブ映像を見ながら操作してください"}</strong>
+            </div>
           </div>
         </div>
 
@@ -174,12 +155,11 @@ export default function PlayerPage() {
           mode={mode}
           action={action}
           selectedHole={selectedHole}
-          pending={Boolean(pending)}
+          signalSent={Boolean(sentSignal)}
           progress={recipeProgress}
-          room={room}
           onModeChange={changeMode}
           onActionChange={setAction}
-          onHoleChange={setSelectedHole}
+          onHoleChange={changeHole}
           onSend={submit}
         />
       </section>
