@@ -1783,18 +1783,6 @@ input {
   line-height: 1.55;
 }
 
-.auto-queue-count {
-  margin: 8px 0 0;
-  padding: 9px 12px;
-  border: 1px solid rgba(224, 100, 54, .28);
-  border-radius: 9px;
-  background: #fff5e9;
-  color: #a24724;
-  font-size: 11px;
-  font-weight: 800;
-  text-align: center;
-}
-
 .auto-operator .projector-button,
 .auto-operator .open-debug-link,
 .auto-operator .reset-calibration,

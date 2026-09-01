@@ -24,7 +24,6 @@ export default function KitchenPage() {
   const [room, setRoom] = useState(DEFAULT_ROOM);
   const [roomInput, setRoomInput] = useState(DEFAULT_ROOM);
   const [current, setCurrent] = useState<SignalMessage | null>(null);
-  const [queue, setQueue] = useState<SignalMessage[]>([]);
   const [calibration, setCalibration] = useState(false);
   const [projectorMode, setProjectorMode] = useState(false);
   const [testHole, setTestHole] = useState(6);
@@ -53,17 +52,11 @@ export default function KitchenPage() {
 
   const onMessage = useCallback((message: SignalMessage) => {
     if (message.role === "player" && message.kind === "request" && message.hole && message.action) {
-      setQueue(items => items.some(item => item.id === message.id) ? items : [...items, message]);
+      setCurrent(message);
     }
   }, []);
 
   const { connection } = useSignalChannel(room, onMessage);
-
-  useEffect(() => {
-    if (current || queue.length === 0) return;
-    setCurrent(queue[0]);
-    setQueue(items => items.slice(1));
-  }, [current, queue]);
 
   useEffect(() => {
     if (!current) return;
@@ -82,7 +75,6 @@ export default function KitchenPage() {
     setRoom(next);
     setRoomInput(next);
     setCurrent(null);
-    setQueue([]);
     localStorage.setItem("tako-room", next);
     window.history.replaceState(null, "", `/kitchen?room=${encodeURIComponent(next)}`);
   };
@@ -125,7 +117,7 @@ export default function KitchenPage() {
       {settingsOpen && (
         <section className="settings-drawer kitchen-settings">
           <label><span>ルームID</span><div className="inline-field"><input value={roomInput} onChange={event => setRoomInput(event.target.value)} /><button onClick={applyRoom}>接続</button></div></label>
-          <div className="settings-note">連続した合図は順番に並び、1件ずつ自動で表示されます。職人のボタン操作は必要ありません。</div>
+          <div className="settings-note">新しい合図は待たずに即時表示されます。職人のボタン操作は必要ありません。</div>
         </section>
       )}
 
@@ -168,8 +160,7 @@ export default function KitchenPage() {
             )}
           </section>
 
-          <p className="auto-dismiss-note">届いた光は約1.8秒ずつ表示されます。連続タップは順番待ちに入り、同じ場所への指示も毎回光ります。</p>
-          {queue.length > 0 && <p className="auto-queue-count">次の合図　{queue.length}件</p>}
+          <p className="auto-dismiss-note">新しい指示は待たずに即時反映されます。連打した場合は、いちばん新しい指示へ光が切り替わります。</p>
 
           <details className="calibration-panel" open={calibration}>
             <summary onClick={event => { event.preventDefault(); setCalibration(value => !value); }}>
