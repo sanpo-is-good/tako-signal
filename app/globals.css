@@ -123,8 +123,8 @@ a { color: inherit; text-decoration: none; }
   position: absolute;
   inset: 12%;
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  grid-template-rows: repeat(5, 1fr);
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(4, 1fr);
   gap: 4% 6%;
 }
 
@@ -1921,4 +1921,406 @@ input {
   .touch-action-grid button {
     min-height: 58px;
   }
+}
+/* Opinion-by-tap interface inspired by the supplied mockup */
+
+.opinion-player {
+  min-height: 100dvh;
+  background:
+    linear-gradient(90deg, rgba(255,255,255,.26) 50%, transparent 50%) 0 0 / 48px 48px,
+    linear-gradient(rgba(255,255,255,.26) 50%, transparent 50%) 0 0 / 48px 48px,
+    #ffd93d;
+  font-family: "Hiragino Maru Gothic ProN", "Yu Gothic", var(--font-geist-sans), sans-serif;
+}
+
+.opinion-player .app-header {
+  border-bottom: 4px solid #b3225c;
+  background: #fff8fb;
+  box-shadow: 0 5px 0 rgba(179,34,92,.18);
+}
+
+.opinion-player .wordmark {
+  color: #b3225c;
+}
+
+.opinion-player .wordmark-dot {
+  background: #ff5c9d;
+  box-shadow: 0 0 0 4px #ffd2e5;
+}
+
+.opinion-player .player-workspace {
+  gap: 14px;
+  padding: 14px;
+  background: transparent;
+}
+
+.opinion-live-panel {
+  padding: 18px !important;
+  border: 5px solid #b3225c !important;
+  border-radius: 18px;
+  background: #ff5c9d;
+  box-shadow: 7px 7px 0 rgba(122,18,54,.3);
+}
+
+.opinion-live-panel .panel-heading {
+  color: white;
+}
+
+.opinion-live-panel .panel-heading .micro-label {
+  color: #fff8c7;
+  text-shadow: 2px 2px 0 #b3225c;
+}
+
+.opinion-live-panel .panel-heading h1 {
+  color: white;
+  font-size: clamp(25px, 3vw, 38px);
+  text-shadow: 2px 2px 0 #b3225c;
+}
+
+.mode-chip {
+  padding: 10px 14px;
+  border: 3px solid #b3225c;
+  border-radius: 7px;
+  background: white;
+  color: #b3225c;
+  box-shadow: 3px 3px 0 #b3225c;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.mode-chip-mischief {
+  border-color: #1f5c1f;
+  background: #d6f5d6;
+  color: #1f5c1f;
+  box-shadow: 3px 3px 0 #1f5c1f;
+}
+
+.opinion-plate-frame {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  border: 5px solid #241919;
+  border-radius: 14px;
+  background: #3b2b2b;
+  box-shadow: inset 0 5px 0 #5c4444, inset 0 -7px 0 #1a1010;
+}
+
+.opinion-plate-frame .signal-plate {
+  width: 100%;
+  filter: none;
+}
+
+.opinion-plate-frame .plate-surface {
+  border: 0;
+  border-radius: 8%;
+  box-shadow: none;
+}
+
+.opinion-plate-frame .plate-hole {
+  width: 13%;
+}
+
+.opinion-player .plate-hole.selected {
+  outline: 4px solid #ffe066;
+  outline-offset: 4px;
+  background: rgba(255,224,102,.08);
+  box-shadow: 0 0 0 6px rgba(255,224,102,.22);
+}
+
+.opinion-player .hole-number {
+  min-width: 30px;
+  min-height: 30px;
+  display: grid;
+  place-items: center;
+  background: rgba(122,18,54,.76);
+  font-size: 11px;
+}
+
+.tap-live-hint {
+  min-height: 70px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 10px 15px;
+  border: 4px solid #2f7a2f;
+  border-radius: 10px;
+  background: #b8e6b8;
+  color: #1f5c1f;
+  box-shadow: 4px 4px 0 #1f5c1f;
+}
+
+.tap-live-hint > span {
+  width: 43px;
+  height: 43px;
+  display: grid;
+  place-items: center;
+  border: 3px solid #1f5c1f;
+  border-radius: 50%;
+  background: #fff;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.tap-live-hint p {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+}
+
+.tap-live-hint strong {
+  font-size: 17px;
+}
+
+.tap-live-hint small {
+  font-size: 11px;
+}
+
+.opinion-console {
+  align-self: stretch;
+  gap: 16px;
+  padding: 18px;
+  border: 5px solid #e8407f;
+  border-radius: 18px;
+  background:
+    repeating-linear-gradient(0deg, #fff 0 18px, #fff5f9 18px 36px);
+  box-shadow: 7px 7px 0 #b3225c;
+}
+
+.opinion-console .touch-mode-switch {
+  padding: 4px;
+  border: 3px solid #b3225c;
+  border-radius: 10px;
+  background: #ffe9f2;
+}
+
+.opinion-console .touch-mode-switch button {
+  min-height: 54px;
+  border-radius: 6px;
+  color: #7a1236;
+}
+
+.opinion-console .touch-mode-switch button.active {
+  background: #ffd93d;
+  color: #7a3b12;
+  box-shadow: 3px 3px 0 #b3225c;
+}
+
+.opinion-console .touch-mode-switch button:nth-child(2).active {
+  background: #b8e6b8;
+  color: #1f5c1f;
+  box-shadow: 3px 3px 0 #1f5c1f;
+}
+
+.opinion-heading p {
+  margin: 0 0 5px;
+  color: #e8407f;
+  font: 750 9px/1 var(--mono);
+  letter-spacing: .09em;
+}
+
+.opinion-heading h2 {
+  margin: 0;
+  color: #7a1236;
+  font-size: 21px;
+}
+
+.opinion-action-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 9px;
+}
+
+.opinion-action-grid button {
+  position: relative;
+  min-height: 94px;
+  display: grid;
+  grid-template-columns: 45px 1fr;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 8px;
+  border: 4px solid #e8a0bf;
+  border-radius: 8px;
+  background: #fff;
+  color: #7a1236;
+  box-shadow: 3px 3px 0 #e8a0bf;
+  cursor: pointer;
+  text-align: left;
+}
+
+.opinion-action-grid button.active {
+  border-color: #b3225c;
+  background: #ffd2e5;
+  box-shadow: inset 0 0 0 3px #ff8cc0, 4px 4px 0 #b3225c;
+}
+
+.opinion-action-grid .opinion-step {
+  position: absolute;
+  right: 6px;
+  top: 6px;
+  color: #c46a92;
+  font: 700 8px/1 var(--mono);
+}
+
+.opinion-action-grid .action-glyph {
+  width: 42px;
+  height: 42px;
+  border: 3px solid #b3225c;
+  border-radius: 5px;
+  background: #ffe066;
+  color: #7a3b12;
+  font-size: 18px;
+}
+
+.opinion-action-grid strong {
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.mode-mischief .opinion-action-grid button {
+  border-color: #8cc98c;
+  color: #1f5c1f;
+  box-shadow: 3px 3px 0 #8cc98c;
+}
+
+.mode-mischief .opinion-action-grid button.active {
+  border-color: #1f5c1f;
+  background: #d6f5d6;
+  box-shadow: inset 0 0 0 3px #8cc98c, 4px 4px 0 #1f5c1f;
+}
+
+.mode-mischief .opinion-action-grid .action-glyph {
+  border-color: #1f5c1f;
+  background: #b8e6b8;
+  color: #1f5c1f;
+}
+
+.tap-to-send {
+  min-height: 82px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: auto;
+  padding: 12px;
+  border: 4px dashed #e8407f;
+  border-radius: 10px;
+  background: #fff6e0;
+  color: #7a3b12;
+}
+
+.tap-to-send.sent {
+  border-style: solid;
+  border-color: #2f7a2f;
+  background: #d6f5d6;
+  color: #1f5c1f;
+}
+
+.tap-symbol {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  display: grid;
+  place-items: center;
+  border: 3px solid currentColor;
+  border-radius: 50%;
+  background: white;
+  font-size: 22px;
+  font-weight: 900;
+  animation: cuePulse 1.25s ease-in-out infinite;
+}
+
+.tap-to-send.sent .tap-symbol {
+  animation: none;
+}
+
+.tap-to-send > div {
+  display: grid;
+  gap: 5px;
+}
+
+.tap-to-send small {
+  color: inherit;
+  font: 750 8px/1 var(--mono);
+  letter-spacing: .09em;
+  opacity: .65;
+}
+
+.tap-to-send strong {
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.opinion-footnote {
+  margin: -8px 0 0;
+  color: #a3567c;
+  text-align: center;
+  font-size: 10px;
+}
+
+.opinion-action-grid button:active,
+.opinion-console .touch-mode-switch button:active,
+.opinion-player .plate-hole:active {
+  transform: scale(.96);
+}
+
+@media (min-width: 820px) and (orientation: landscape) {
+  .opinion-player .player-workspace {
+    grid-template-columns: minmax(0, 1fr) 350px;
+    min-height: calc(100dvh - 72px);
+  }
+
+  .opinion-player .opinion-console {
+    max-height: calc(100dvh - 100px);
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 819px), (orientation: portrait) {
+  .opinion-player .player-workspace {
+    grid-template-columns: 1fr;
+  }
+
+  .opinion-player .opinion-console {
+    max-height: none;
+  }
+
+  .opinion-plate-frame {
+    min-height: 52vw;
+  }
+
+  .opinion-action-grid button {
+    min-height: 84px;
+  }
+}
+
+@media (max-width: 560px) {
+  .opinion-player .player-workspace {
+    padding: 8px;
+  }
+
+  .opinion-live-panel,
+  .opinion-console {
+    border-width: 4px !important;
+    border-radius: 13px;
+  }
+
+  .opinion-action-grid button {
+    min-height: 76px;
+    grid-template-columns: 38px 1fr;
+  }
+
+  .opinion-action-grid .action-glyph {
+    width: 36px;
+    height: 36px;
+  }
+}
+.opinion-player .plate-hole .hole-number {
+  opacity: 0;
+}
+
+.opinion-player .plate-hole.selected .hole-number,
+.opinion-player .plate-hole.cue-active .hole-number {
+  opacity: 1;
 }

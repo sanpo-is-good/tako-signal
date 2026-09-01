@@ -7,8 +7,6 @@ import { PlayerControls } from "../components/PlayerControls";
 import { SignalPlate } from "../components/SignalPlate";
 import { useSignalChannel } from "../hooks/useSignalChannel";
 import {
-  ACTIONS,
-  CONTROL_ACTIONS,
   DEFAULT_ROOM,
   HOLE_OFFSETS_KEY,
   createMessage,
@@ -28,10 +26,9 @@ export default function PlayerPage() {
   const [room, setRoom] = useState(DEFAULT_ROOM);
   const [roomInput, setRoomInput] = useState(DEFAULT_ROOM);
   const [streamId, setStreamId] = useState("takokuri1");
-  const [selectedHole, setSelectedHole] = useState(6);
+  const [selectedHole, setSelectedHole] = useState<number>();
   const [mode, setMode] = useState<GameMode>("control");
   const [action, setAction] = useState<ActionKind>("batter");
-  const [recipeProgress, setRecipeProgress] = useState<ActionKind[]>([]);
   const [holeOffsets, setHoleOffsets] = useState<HoleOffsets>({});
   const [sentSignal, setSentSignal] = useState<SentSignal | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -58,39 +55,25 @@ export default function PlayerPage() {
 
   useEffect(() => {
     if (!sentSignal) return;
-    const timer = window.setTimeout(() => setSentSignal(null), 1600);
+    const timer = window.setTimeout(() => setSentSignal(null), 1700);
     return () => window.clearTimeout(timer);
   }, [sentSignal]);
 
   const { connection, send } = useSignalChannel(room, () => {});
 
-  const submit = () => {
-    const message = createMessage("request", "player", room, { hole: selectedHole, action, gameMode: mode });
+  const sendOpinion = (hole: number) => {
+    const message = createMessage("request", "player", room, { hole, action, gameMode: mode });
     send(message);
-    setSentSignal({ hole: selectedHole, action });
-
-    if (mode === "control" && CONTROL_ACTIONS.includes(action)) {
-      setRecipeProgress(items => items.includes(action) ? items : [...items, action]);
-      const index = CONTROL_ACTIONS.indexOf(action);
-      const next = CONTROL_ACTIONS[index + 1];
-      if (next) setAction(next);
-    }
+    setSelectedHole(hole);
+    setSentSignal({ hole, action });
   };
 
   const changeMode = (nextMode: GameMode) => {
     setMode(nextMode);
     setAction(nextMode === "control" ? "batter" : "mischiefSpin");
-    setRecipeProgress([]);
+    setSelectedHole(undefined);
     setSentSignal(null);
     localStorage.setItem("tako-game-mode", nextMode);
-  };
-
-  const changeHole = (hole: number) => {
-    if (hole !== selectedHole && mode === "control") {
-      setRecipeProgress([]);
-      setAction("batter");
-    }
-    setSelectedHole(hole);
   };
 
   const applyRoom = () => {
@@ -107,10 +90,10 @@ export default function PlayerPage() {
   };
 
   return (
-    <main className="app-shell player-shell ipad-player">
+    <main className="app-shell player-shell ipad-player opinion-player">
       <header className="app-header">
         <Link href="/" className="wordmark"><span className="wordmark-dot" />TAKO SIGNAL</Link>
-        <div className="header-center"><span>TOUCH PLAYER</span><b>/</b><span>ROOM {room.toUpperCase()}</span></div>
+        <div className="header-center"><span>TAP YOUR OPINION</span><b>/</b><span>ROOM {room.toUpperCase()}</span></div>
         <div className="header-actions">
           <ConnectionPill connection={connection} />
           <button className="icon-button" onClick={() => setSettingsOpen(value => !value)} aria-label="設定を開く">⚙</button>
@@ -126,41 +109,37 @@ export default function PlayerPage() {
       )}
 
       <section className="player-workspace">
-        <div className="live-panel">
+        <div className="live-panel opinion-live-panel">
           <div className="panel-heading">
-            <div><p className="micro-label">LIVE TAKOYAKI</p><h1>映像を見て、光で動かす</h1></div>
-            <span className="touch-guide">穴をタップして選べます</span>
+            <div><p className="micro-label">TEPPAN 4 × 5 / LIVE</p><h1>意見を選んで、たこ焼きにタッチ</h1></div>
+            <span className={`mode-chip mode-chip-${mode}`}>{mode === "control" ? "完全操縦" : "おまかせ"}</span>
           </div>
 
-          <SignalPlate
-            streamId={streamId}
-            selectedHole={selectedHole}
-            activeHole={sentSignal?.hole}
-            activeAction={sentSignal?.action}
-            interactive
-            onSelect={changeHole}
-            holeOffsets={holeOffsets}
-          />
+          <div className="opinion-plate-frame">
+            <SignalPlate
+              streamId={streamId}
+              selectedHole={selectedHole}
+              activeHole={sentSignal?.hole}
+              activeAction={sentSignal?.action}
+              interactive
+              onSelect={sendOpinion}
+              holeOffsets={holeOffsets}
+            />
+          </div>
 
-          <div className={`activity-banner touch-status ${sentSignal ? "is-busy" : ""}`}>
-            <span className="activity-index">{sentSignal ? "✓" : "○"}</span>
-            <div>
-              <small>{sentSignal ? "SIGNAL SENT" : "READY"}</small>
-              <strong>{sentSignal ? `穴 ${sentSignal.hole}を「${ACTIONS[sentSignal.action].label}」で光らせました` : "ライブ映像を見ながら操作してください"}</strong>
-            </div>
+          <div className="tap-live-hint">
+            <span>◎</span>
+            <p><strong>たこ焼きを直接タップ</strong><small>選んだ意見が、その場所の光になります</small></p>
           </div>
         </div>
 
         <PlayerControls
           mode={mode}
           action={action}
-          selectedHole={selectedHole}
+          lastHole={selectedHole}
           signalSent={Boolean(sentSignal)}
-          progress={recipeProgress}
           onModeChange={changeMode}
           onActionChange={setAction}
-          onHoleChange={changeHole}
-          onSend={submit}
         />
       </section>
     </main>
