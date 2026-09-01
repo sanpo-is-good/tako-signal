@@ -1,10 +1,12 @@
 "use client";
 
+import { Fragment } from "react";
 import { ACTIONS, HOLES, type ActionKind, type HoleOffsets } from "../lib/takoyaki";
 
 interface PlateProps {
   activeHole?: number;
   activeAction?: ActionKind;
+  cueId?: string;
   selectedHole?: number;
   streamId?: string;
   interactive?: boolean;
@@ -18,6 +20,7 @@ interface PlateProps {
 export function SignalPlate({
   activeHole,
   activeAction = "turn",
+  cueId,
   selectedHole,
   streamId,
   interactive = false,
@@ -85,11 +88,11 @@ export function SignalPlate({
                 <span className="takoyaki-ball" />
                 {(interactive || calibration || isActive) && <span className="hole-number">{String(hole.id).padStart(2, "0")}</span>}
                 {isActive && (
-                  <>
+                  <Fragment key={cueId || `${hole.id}-${activeAction}`}>
                     <span className="cue-ring cue-ring-one" />
                     <span className="cue-ring cue-ring-two" />
                     <span className="cue-label">{ACTIONS[activeAction].short}</span>
-                  </>
+                  </Fragment>
                 )}
               </Element>
             );

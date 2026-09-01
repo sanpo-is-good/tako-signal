@@ -18,6 +18,7 @@ import {
 } from "../lib/takoyaki";
 
 type SentSignal = {
+  id: string;
   hole: number;
   action: ActionKind;
 };
@@ -55,7 +56,7 @@ export default function PlayerPage() {
 
   useEffect(() => {
     if (!sentSignal) return;
-    const timer = window.setTimeout(() => setSentSignal(null), 1700);
+    const timer = window.setTimeout(() => setSentSignal(null), 900);
     return () => window.clearTimeout(timer);
   }, [sentSignal]);
 
@@ -65,7 +66,7 @@ export default function PlayerPage() {
     const message = createMessage("request", "player", room, { hole, action, gameMode: mode });
     send(message);
     setSelectedHole(hole);
-    setSentSignal({ hole, action });
+    setSentSignal({ id: message.id, hole, action });
   };
 
   const changeMode = (nextMode: GameMode) => {
@@ -121,6 +122,7 @@ export default function PlayerPage() {
               selectedHole={selectedHole}
               activeHole={sentSignal?.hole}
               activeAction={sentSignal?.action}
+              cueId={sentSignal?.id}
               interactive
               onSelect={sendOpinion}
               holeOffsets={holeOffsets}
