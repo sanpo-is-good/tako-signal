@@ -71,8 +71,8 @@ export function SignalPlate({
                 className={`plate-hole ${isActive ? `cue-active cue-${ACTIONS[activeAction].effect}` : ""} ${isSelected ? "selected" : ""} ${calibration ? "calibration-hole" : ""} ${onHolePositionChange ? "position-editable" : ""}`}
                 style={{ left: `${left}%`, top: `${top}%` }}
                 key={hole.id}
-                onClick={interactive ? () => onSelect?.(hole.id) : undefined}
-                onPointerDown={onHolePositionChange ? event => { event.currentTarget.setPointerCapture(event.pointerId); onSelect?.(hole.id); } : undefined}
+                onClick={interactive ? event => { if (event.detail === 0) onSelect?.(hole.id); } : undefined}
+                onPointerDown={onHolePositionChange ? event => { event.currentTarget.setPointerCapture(event.pointerId); onSelect?.(hole.id); } : interactive ? event => { event.preventDefault(); onSelect?.(hole.id); } : undefined}
                 onPointerMove={onHolePositionChange ? event => {
                   if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
                   const layer = event.currentTarget.parentElement;

@@ -11,12 +11,14 @@ export function useSignalChannel(room: string, onMessage: (message: SignalMessag
   const socketRef = useRef<WebSocket | null>(null);
   const callbackRef = useRef(onMessage);
   const seenRef = useRef(new Set<string>());
+  const pendingRef = useRef<SignalMessage[]>([]);
 
   useEffect(() => { callbackRef.current = onMessage; }, [onMessage]);
 
   useEffect(() => {
     let disposed = false;
     let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+    pendingRef.current = [];
     const channel = new BroadcastChannel(`tako-signal-${room}`);
     channelRef.current = channel;
 
@@ -34,11 +36,15 @@ export function useSignalChannel(room: string, onMessage: (message: SignalMessag
       const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
       const socket = new WebSocket(`${protocol}//${window.location.host}/api/ws?room=${encodeURIComponent(room)}`);
       socketRef.current = socket;
-      socket.onopen = () => setConnection("online");
+      socket.onopen = () => {
+        setConnection("online");
+        const pending = pendingRef.current.splice(0);
+        for (const message of pending) socket.send(JSON.stringify(message));
+      };
       socket.onmessage = event => { try { deliver(JSON.parse(event.data) as SignalMessage); } catch { /* malformed relay traffic */ } };
       socket.onerror = () => socket.close();
       socket.onclose = () => {
-        if (!disposed) { setConnection("local"); reconnectTimer = setTimeout(connect, 3500); }
+        if (!disposed) { setConnection("local"); reconnectTimer = setTimeout(connect, 250); }
       };
     };
 
@@ -56,7 +62,18 @@ export function useSignalChannel(room: string, onMessage: (message: SignalMessag
   const send = useCallback((message: SignalMessage) => {
     seenRef.current.add(message.id);
     channelRef.current?.postMessage(message);
-    if (socketRef.current?.readyState === WebSocket.OPEN) socketRef.current.send(JSON.stringify(message));
+    const transmit = () => {
+      const socket = socketRef.current;
+      if (socket?.readyState === WebSocket.OPEN) {
+        try { socket.send(JSON.stringify(message)); return; } catch { /* retry below */ }
+      }
+      if (!pendingRef.current.some(item => item.id === message.id)) {
+        pendingRef.current = [...pendingRef.current.slice(-7), message];
+      }
+    };
+    transmit();
+    window.setTimeout(transmit, 90);
+    window.setTimeout(transmit, 280);
   }, []);
 
   return { connection, send };

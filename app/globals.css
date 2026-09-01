@@ -2019,7 +2019,7 @@ input {
 }
 
 .opinion-plate-frame .plate-hole {
-  width: 13%;
+  width: 17%;
 }
 
 .opinion-player .plate-hole.selected {
@@ -2260,9 +2260,12 @@ input {
 }
 
 .opinion-action-grid button:active,
-.opinion-console .touch-mode-switch button:active,
-.opinion-player .plate-hole:active {
+.opinion-console .touch-mode-switch button:active {
   transform: scale(.96);
+}
+
+.opinion-player .plate-hole:active {
+  transform: translate(-50%, -50%) scale(.96);
 }
 
 @media (min-width: 820px) and (orientation: landscape) {
