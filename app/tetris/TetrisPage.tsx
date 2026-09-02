@@ -1,12 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ConnectionPill } from "../components/ConnectionPill";
 import { useSignalChannel } from "../hooks/useSignalChannel";
 import { DEFAULT_ROOM, createMessage, sanitizeRoom } from "../lib/takoyaki";
 import { TETRIS_COLS as COLS, TETRIS_ROWS as ROWS } from "../lib/tetris";
 
+const LIVE_LOCK_KEY = "tako-live-lock";
 const KINDS = ["I", "O", "T", "S", "Z", "J", "L"] as const;
 type PieceKind = (typeof KINDS)[number];
 type Cell = PieceKind | null;
@@ -144,14 +145,26 @@ export default function TetrisPage() {
   const [room, setRoom] = useState(DEFAULT_ROOM);
   const [game, setGame] = useState<GameState>(() => newGame());
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsLocked, setSettingsLocked] = useState(false);
   const [holdKind, setHoldKind] = useState<PieceKind>();
   const [elapsed, setElapsed] = useState(0);
+  const unlockTimer = useRef<number | null>(null);
   const { connection, send } = useSignalChannel(room, () => {});
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setStreamId(params.get("stream") || localStorage.getItem("tako-stream") || "takokuri1");
     setRoom(sanitizeRoom(params.get("room") || localStorage.getItem("tako-room") || DEFAULT_ROOM));
+    setSettingsLocked(localStorage.getItem(LIVE_LOCK_KEY) === "1");
+
+    const syncLock = (event: StorageEvent) => {
+      if (event.key !== LIVE_LOCK_KEY) return;
+      const locked = event.newValue === "1";
+      setSettingsLocked(locked);
+      if (locked) setSettingsOpen(false);
+    };
+    window.addEventListener("storage", syncLock);
+    return () => window.removeEventListener("storage", syncLock);
   }, []);
 
   useEffect(() => {
@@ -169,6 +182,7 @@ export default function TetrisPage() {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      if (settingsOpen) return;
       if (["ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp", " "].includes(event.key)) event.preventDefault();
       if (event.key === "ArrowLeft") setGame(state => moveSide(state, -1));
       if (event.key === "ArrowRight") setGame(state => moveSide(state, 1));
@@ -179,6 +193,10 @@ export default function TetrisPage() {
     };
     window.addEventListener("keydown", onKeyDown, { passive: false });
     return () => window.removeEventListener("keydown", onKeyDown);
+  }, [settingsOpen]);
+
+  useEffect(() => () => {
+    if (unlockTimer.current !== null) window.clearTimeout(unlockTimer.current);
   }, []);
 
   const projectionCells = useMemo(() => {
@@ -228,26 +246,83 @@ export default function TetrisPage() {
     });
   };
 
+  const enableLiveLock = () => {
+    localStorage.setItem(LIVE_LOCK_KEY, "1");
+    setSettingsLocked(true);
+    setSettingsOpen(false);
+  };
+
+  const disableLiveLock = () => {
+    localStorage.removeItem(LIVE_LOCK_KEY);
+    setSettingsLocked(false);
+  };
+
+  const startUnlockPress = () => {
+    if (unlockTimer.current !== null) window.clearTimeout(unlockTimer.current);
+    unlockTimer.current = window.setTimeout(() => {
+      disableLiveLock();
+      unlockTimer.current = null;
+    }, 2000);
+  };
+
+  const cancelUnlockPress = () => {
+    if (unlockTimer.current !== null) window.clearTimeout(unlockTimer.current);
+    unlockTimer.current = null;
+  };
+
   const level = Math.min(99, Math.floor(game.lines / 4) + 1);
   const time = `${String(Math.floor(elapsed / 60)).padStart(2, "0")}’${String(elapsed % 60).padStart(2, "0")}`;
-  const videoUrl = "https://vdo.ninja/?view=" + encodeURIComponent(streamId.trim()) + "&cleanoutput&autoplay&muted";
+  const videoUrl = "https://vdo.ninja/?view=" + encodeURIComponent(streamId.trim()) + "&cleanoutput&noaudio";
 
   return (
-    <main className="tetris-shell arcade-tetris">
-      <header className="tetris-header arcade-header">
-        <Link href="/" className="wordmark"><span className="wordmark-dot" />TAKO SIGNAL</Link>
-        <div><b>TAKO TETRIS</b></div>
-        <div className="tetris-header-buttons">
+    <main className={`tetris-shell arcade-tetris ${settingsOpen ? "tetris-settings-open" : ""}`}>
+      <header className="tetris-header arcade-header show-header tetris-show-header">
+        <div className="show-header__brand">
+          <span className="show-header__mascot" aria-hidden="true">🧱</span>
+          <div className="show-header__brand-copy">
+            {settingsLocked ? (
+              <span className="wordmark"><span className="wordmark-dot" />TAKO SIGNAL</span>
+            ) : (
+              <Link href="/" className="wordmark"><span className="wordmark-dot" />TAKO SIGNAL</Link>
+            )}
+            <span className="show-header__subtitle">TAKO TETRIS CONTROL</span>
+          </div>
+        </div>
+
+        <div className="show-header__center">
+          <span className="show-chip">ROOM {room.toUpperCase()}</span>
+          <span className={`show-chip ${settingsLocked ? "live" : "setup"}`}>{settingsLocked ? "LIVE LOCK" : "SETUP"}</span>
+        </div>
+
+        <div className="show-header__actions">
           <ConnectionPill connection={connection} />
-          <button onClick={() => setSettingsOpen(value => !value)} aria-label="設定">⚙</button>
-          <button onClick={restartGame} aria-label="リスタート">↺</button>
+          {settingsLocked ? (
+            <button
+              className="show-live-unlock"
+              onPointerDown={startUnlockPress}
+              onPointerUp={cancelUnlockPress}
+              onPointerCancel={cancelUnlockPress}
+              onPointerLeave={cancelUnlockPress}
+              aria-label="2秒長押しで本番モードを解除"
+            >
+              <strong>LIVE 🔒</strong>
+              <small>2秒長押しで解除</small>
+            </button>
+          ) : (
+            <button className="show-settings-button" onClick={() => setSettingsOpen(value => !value)} aria-label="設定">⚙</button>
+          )}
+          <button className="show-settings-button" onClick={restartGame} aria-label="リスタート">↺</button>
         </div>
       </header>
 
-      {settingsOpen && <section className="tetris-settings">
+      {settingsOpen && !settingsLocked && <section className="tetris-settings">
         <label><span>ROOM</span><input value={room} onChange={event => { const value = sanitizeRoom(event.target.value); setRoom(value); localStorage.setItem("tako-room", value); }} /></label>
         <label><span>STREAM</span><input value={streamId} onChange={event => { setStreamId(event.target.value); localStorage.setItem("tako-stream", event.target.value); }} /></label>
         <div><Link href={"/tetris-projector?room=" + encodeURIComponent(room)}>投影</Link><Link href="/tetris-adjust">調整</Link><Link href="/tutorial">?</Link></div>
+        <div className="show-settings-footer">
+          <p>設定中は盤面上のゲームUIをタップ無効にしているので、VDO.Ninja の再生ボタンを直接押せます。本番モードでは設定を封印します。</p>
+          <button className="show-live-lock-button" onClick={enableLiveLock}>🔒 本番モードを開始</button>
+        </div>
       </section>}
 
       <section className="arcade-cabinet">
@@ -264,7 +339,7 @@ export default function TetrisPage() {
         <div className="arcade-play-row">
           <div className="arcade-board-frame">
             <div className="tetris-board player-video-board" aria-label="投影されたテトリスを確認するVDO.Ninja映像">
-              {streamId.trim() ? <iframe className="tetris-video" src={videoUrl} title="VDO.Ninja game field" allow="autoplay; fullscreen" /> : <div className="tetris-video-placeholder">NO SIGNAL</div>}
+              {streamId.trim() ? <iframe className="tetris-video" src={videoUrl} title="VDO.Ninja game field" allow="autoplay; fullscreen; picture-in-picture" /> : <div className="tetris-video-placeholder">NO SIGNAL</div>}
               <div className="tetris-scanlines" />
               <div className="tetris-grid player-tetris-grid" style={{ gridTemplateColumns: `repeat(${COLS}, 1fr)`, gridTemplateRows: `repeat(${ROWS}, 1fr)` }} aria-hidden="true">
                 {Array.from({ length: ROWS * COLS }, (_, index) => <span key={index} className="tetris-cell" />)}
