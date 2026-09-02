@@ -31,8 +31,8 @@ export default function Home() {
       <section className="role-section" aria-labelledby="role-title">
         <div className="section-heading">
           <p className="eyebrow">START</p>
-          <h2 id="role-title">2つの画面を開いて試す</h2>
-          <p>まず同じPCの別タブで開けば、サーバー設定なしで動作を確認できます。</p>
+          <h2 id="role-title">遊び方を選ぶ</h2>
+          <p>光で職人へ意見を送るモードと、映像そのものを盤面にするゲームを選べます。</p>
         </div>
 
         <div className="role-grid">
@@ -47,6 +47,12 @@ export default function Home() {
             <div><p className="role-kicker">KITCHEN SIDE</p><h3>調理場・投映画面</h3><p>受け取った指示を鉄板上のリングへ変換し、職人が完了を返します。</p></div>
             <span className="card-arrow" aria-hidden="true">↗</span>
           </Link>
+
+          <Link className="role-card tetris-card" href="/tetris">
+            <span className="role-number">03</span>
+            <div><p className="role-kicker">ALTERNATIVE GAME</p><h3>VIDEO TETRIS</h3><p>VDO.Ninja映像を長方形の盤面にして、その映像の中へブロックを積み上げます。</p></div>
+            <span className="card-arrow" aria-hidden="true">↗</span>
+          </Link>
         </div>
       </section>
 
@@ -54,7 +60,7 @@ export default function Home() {
         <span>選ぶ</span><i>→</i><span>光る</span><i>→</i><span>職人が焼く</span><i>→</i><span>映像で返る</span>
       </section>
 
-      <footer className="landing-footer"><span>TAKO SIGNAL / PROTOTYPE 01</span><span>HTML · VDO.Ninja · WebSocket</span></footer>
+      <footer className="landing-footer"><span>TAKO SIGNAL / PROTOTYPE 01</span><span>HTML · VDO.Ninja · P2P</span></footer>
     </main>
   );
 }

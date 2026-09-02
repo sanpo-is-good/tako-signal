@@ -13,7 +13,15 @@ export type ActionKind =
   | "mischiefRush"
   | "add";
 export type Role = "player" | "kitchen";
-export type MessageKind = "request" | "accepted" | "completed" | "skipped" | "cancelled" | "presence" | "paused";
+export type MessageKind = "request" | "accepted" | "completed" | "skipped" | "cancelled" | "presence" | "paused" | "tetris";
+export type TetrisBlock = "I" | "O" | "T" | "S" | "Z" | "J" | "L";
+
+export interface TetrisProjectionState {
+  cells: Array<TetrisBlock | null>;
+  score: number;
+  lines: number;
+  status: "ready" | "running" | "paused" | "gameover";
+}
 
 export interface SignalMessage {
   id: string;
@@ -26,6 +34,7 @@ export interface SignalMessage {
   gameMode?: GameMode;
   action?: ActionKind;
   paused?: boolean;
+  tetris?: TetrisProjectionState;
 }
 
 export interface HolePosition { id: number; x: number; y: number }
