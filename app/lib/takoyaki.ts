@@ -65,7 +65,7 @@ export const ACTION_ICONS: Record<ActionKind, string> = {
   mischiefSpin: "/icons/turn.png?v=3", mischiefTenkasu: "/icons/tenkasu.png?v=3", mischiefWait: "/icons/batter.png?v=3", mischiefRush: "/icons/serve.png?v=3", add: "/icons/octopus.png?v=3",
 };
 export function resolveAssetPath(path: string): string {
-  return typeof window !== "undefined" && window.location.pathname.startsWith("/tako-signal") ? `/tako-signal` : path;
+  return typeof window !== "undefined" && window.location.pathname.startsWith("/tako-signal") ? "/tako-signal" + path : path;
 }
 export const CONTROL_ACTIONS: ActionKind[] = ["batter", "octopus", "tenkasu", "greenOnion", "turn", "serve"];
 export const MISCHIEF_ACTIONS: ActionKind[] = ["mischiefSpin", "mischiefTenkasu", "mischiefWait", "mischiefRush"];
