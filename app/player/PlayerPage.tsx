@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ConnectionPill } from "../components/ConnectionPill";
 import { PlayerControls } from "../components/PlayerControls";
 import { SignalPlate } from "../components/SignalPlate";
@@ -16,6 +16,8 @@ import {
   type GameMode,
   type HoleOffsets,
 } from "../lib/takoyaki";
+
+const LIVE_LOCK_KEY = "tako-live-lock";
 
 type SentSignal = {
   id: string;
@@ -34,6 +36,8 @@ export default function PlayerPage() {
   const [holeOffsets, setHoleOffsets] = useState<HoleOffsets>({});
   const [sentSignal, setSentSignal] = useState<SentSignal | null>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsLocked, setSettingsLocked] = useState(false);
+  const unlockTimer = useRef<number | null>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -42,6 +46,7 @@ export default function PlayerPage() {
     setRoom(initialRoom);
     setRoomInput(initialRoom);
     setStreamId(initialStream);
+    setSettingsLocked(localStorage.getItem(LIVE_LOCK_KEY) === "1");
     setHoleOffsets(parseHoleOffsets(localStorage.getItem(HOLE_OFFSETS_KEY)));
     const savedMode = localStorage.getItem("tako-game-mode");
     if (savedMode === "control" || savedMode === "mischief") {
@@ -50,6 +55,11 @@ export default function PlayerPage() {
     }
     const syncOffsets = (event: StorageEvent) => {
       if (event.key === HOLE_OFFSETS_KEY) setHoleOffsets(parseHoleOffsets(event.newValue));
+      if (event.key === LIVE_LOCK_KEY) {
+        const locked = event.newValue === "1";
+        setSettingsLocked(locked);
+        if (locked) setSettingsOpen(false);
+      }
     };
     window.addEventListener("storage", syncOffsets);
     return () => window.removeEventListener("storage", syncOffsets);
@@ -60,6 +70,10 @@ export default function PlayerPage() {
     const timer = window.setTimeout(() => setSentSignal(null), 900);
     return () => window.clearTimeout(timer);
   }, [sentSignal]);
+
+  useEffect(() => () => {
+    if (unlockTimer.current !== null) window.clearTimeout(unlockTimer.current);
+  }, []);
 
   const { connection, send } = useSignalChannel(room, () => {});
 
@@ -98,18 +112,71 @@ export default function PlayerPage() {
     setVideoEnabled(value => !value);
   };
 
+  const enableLiveLock = () => {
+    localStorage.setItem(LIVE_LOCK_KEY, "1");
+    setSettingsLocked(true);
+    setSettingsOpen(false);
+  };
+
+  const disableLiveLock = () => {
+    localStorage.removeItem(LIVE_LOCK_KEY);
+    setSettingsLocked(false);
+  };
+
+  const startUnlockPress = () => {
+    if (unlockTimer.current !== null) window.clearTimeout(unlockTimer.current);
+    unlockTimer.current = window.setTimeout(() => {
+      disableLiveLock();
+      unlockTimer.current = null;
+    }, 2000);
+  };
+
+  const cancelUnlockPress = () => {
+    if (unlockTimer.current !== null) window.clearTimeout(unlockTimer.current);
+    unlockTimer.current = null;
+  };
+
   return (
     <main className="app-shell player-shell ipad-player opinion-player">
-      <header className="app-header">
-        <Link href="/" className="wordmark"><span className="wordmark-dot" />TAKO SIGNAL</Link>
-        <div className="header-center"><span>TAP YOUR OPINION</span><b>/</b><span>ROOM {room.toUpperCase()}</span></div>
-        <div className="header-actions">
+      <header className="app-header show-header player-show-header">
+        <div className="show-header__brand">
+          <span className="show-header__mascot" aria-hidden="true">🐙</span>
+          <div className="show-header__brand-copy">
+            {settingsLocked ? (
+              <span className="wordmark"><span className="wordmark-dot" />TAKO SIGNAL</span>
+            ) : (
+              <Link href="/" className="wordmark"><span className="wordmark-dot" />TAKO SIGNAL</Link>
+            )}
+            <span className="show-header__subtitle">TAKOYAKI CONTROL CONSOLE</span>
+          </div>
+        </div>
+
+        <div className="show-header__center">
+          <span className="show-chip">ROOM {room.toUpperCase()}</span>
+          <span className={`show-chip ${settingsLocked ? "live" : "setup"}`}>{settingsLocked ? "LIVE LOCK" : "SETUP"}</span>
+        </div>
+
+        <div className="show-header__actions">
           <ConnectionPill connection={connection} />
-          <button className="icon-button" onClick={() => setSettingsOpen(value => !value)} aria-label="設定を開く">⚙</button>
+          {settingsLocked ? (
+            <button
+              className="show-live-unlock"
+              onPointerDown={startUnlockPress}
+              onPointerUp={cancelUnlockPress}
+              onPointerCancel={cancelUnlockPress}
+              onPointerLeave={cancelUnlockPress}
+              aria-label="2秒長押しで本番モードを解除"
+            >
+              <strong>LIVE 🔒</strong>
+              <small>2秒長押しで解除</small>
+            </button>
+          ) : (
+            <button className="show-settings-button" onClick={() => setSettingsOpen(value => !value)} aria-label="設定を開く">⚙</button>
+          )}
         </div>
       </header>
 
-      {settingsOpen && (
+      {settingsOpen && !settingsLocked && (
         <section className="settings-drawer">
           <label><span>ルームID</span><div className="inline-field"><input value={roomInput} onChange={event => setRoomInput(event.target.value)} /><button onClick={applyRoom}>接続</button></div></label>
           <label>
@@ -122,6 +189,10 @@ export default function PlayerPage() {
           <div className="settings-note">
             {videoEnabled ? "ライブ映像を再生中です。設定を開いている間は映像上の再生ボタンを直接操作できます。" : "Stream IDを確認して「映像を再生」を押してください。"}
             {" "}位置調整画面と投影画面も同じルームIDを使います。 <Link href="/tutorial">遊び方を見る</Link>
+          </div>
+          <div className="show-settings-footer">
+            <p>本番モードにすると設定を閉じ、⚙を隠して誤操作を防ぎます。解除はヘッダーの LIVE LOCK を2秒長押しします。</p>
+            <button className="show-live-lock-button" onClick={enableLiveLock}>🔒 本番モードを開始</button>
           </div>
         </section>
       )}
