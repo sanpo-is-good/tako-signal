@@ -76,7 +76,8 @@ export default function KitchenPage() {
     setRoomInput(next);
     setCurrent(null);
     localStorage.setItem("tako-room", next);
-    window.history.replaceState(null, "", `/kitchen?room=${encodeURIComponent(next)}`);
+    const basePath = window.location.pathname.startsWith("/tako-signal/") ? "/tako-signal" : "";
+    window.history.replaceState(null, "", `${basePath}/kitchen?room=${encodeURIComponent(next)}`);
   };
 
   const updateTransform = (key: keyof TransformState, value: number) => {

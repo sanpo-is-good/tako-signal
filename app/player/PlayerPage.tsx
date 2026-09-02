@@ -82,7 +82,8 @@ export default function PlayerPage() {
     setRoom(next);
     setRoomInput(next);
     localStorage.setItem("tako-room", next);
-    history.replaceState(null, "", `/player?room=${encodeURIComponent(next)}`);
+    const basePath = window.location.pathname.startsWith("/tako-signal/") ? "/tako-signal" : "";
+    history.replaceState(null, "", `${basePath}/player?room=${encodeURIComponent(next)}`);
   };
 
   const saveStream = (value: string) => {
