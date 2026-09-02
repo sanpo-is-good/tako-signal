@@ -126,11 +126,26 @@ function hardDrop(state: GameState): GameState {
   return lockPiece({ ...state, active, score: state.score + distance * 2 });
 }
 
+function PiecePreview({ kind }: { kind?: PieceKind }) {
+  const occupied = new Set(kind ? pieceCells({ kind, rotation: 0, x: 0, y: 0 }).map(([x, y]) => `${x}-${y}`) : []);
+  return (
+    <div className="arcade-piece-preview" aria-hidden="true">
+      {Array.from({ length: 16 }, (_, index) => {
+        const x = index % 4;
+        const y = Math.floor(index / 4);
+        return <span key={index} className={occupied.has(`${x}-${y}`) && kind ? `block-${kind.toLowerCase()}` : ""} />;
+      })}
+    </div>
+  );
+}
+
 export default function TetrisPage() {
   const [streamId, setStreamId] = useState("takokuri1");
   const [room, setRoom] = useState(DEFAULT_ROOM);
   const [game, setGame] = useState<GameState>(() => newGame());
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [holdKind, setHoldKind] = useState<PieceKind>();
+  const [elapsed, setElapsed] = useState(0);
   const { connection, send } = useSignalChannel(room, () => {});
 
   useEffect(() => {
@@ -145,6 +160,12 @@ export default function TetrisPage() {
     const timer = window.setInterval(() => setGame(stepDown), speed);
     return () => window.clearInterval(timer);
   }, [game.status, game.lines]);
+
+  useEffect(() => {
+    if (game.status !== "running") return;
+    const timer = window.setInterval(() => setElapsed(value => value + 1), 1000);
+    return () => window.clearInterval(timer);
+  }, [game.status]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -181,25 +202,45 @@ export default function TetrisPage() {
     setGame(action);
   };
 
+  const restartGame = () => {
+    setGame(newGame("running"));
+    setHoldKind(undefined);
+    setElapsed(0);
+  };
+
   const toggleGame = () => {
+    if (game.status === "gameover") { restartGame(); return; }
     setGame(state => {
       if (state.status === "ready") return { ...state, status: "running" };
-      if (state.status === "gameover") return newGame("running");
       return { ...state, status: state.status === "running" ? "paused" : "running" };
     });
   };
 
+  const holdPiece = () => {
+    if (game.status !== "running") return;
+    const outgoing = game.active.kind;
+    const incoming = holdKind || game.next;
+    setHoldKind(outgoing);
+    setGame(state => {
+      const active = spawn(incoming);
+      const candidate = { ...state, active, next: holdKind ? state.next : randomKind() };
+      return collides(candidate.board, active) ? { ...candidate, status: "gameover" } : candidate;
+    });
+  };
+
+  const level = Math.min(99, Math.floor(game.lines / 4) + 1);
+  const time = `${String(Math.floor(elapsed / 60)).padStart(2, "0")}’${String(elapsed % 60).padStart(2, "0")}`;
   const videoUrl = "https://vdo.ninja/?view=" + encodeURIComponent(streamId.trim()) + "&cleanoutput&autoplay&muted";
 
   return (
-    <main className="tetris-shell">
-      <header className="tetris-header">
+    <main className="tetris-shell arcade-tetris">
+      <header className="tetris-header arcade-header">
         <Link href="/" className="wordmark"><span className="wordmark-dot" />TAKO SIGNAL</Link>
-        <div><b>VIDEO TETRIS</b></div>
+        <div><b>TAKO TETRIS</b></div>
         <div className="tetris-header-buttons">
           <ConnectionPill connection={connection} />
           <button onClick={() => setSettingsOpen(value => !value)} aria-label="設定">⚙</button>
-          <button onClick={() => setGame(newGame("running"))} aria-label="リスタート">↺</button>
+          <button onClick={restartGame} aria-label="リスタート">↺</button>
         </div>
       </header>
 
@@ -209,29 +250,46 @@ export default function TetrisPage() {
         <div><Link href={"/tetris-projector?room=" + encodeURIComponent(room)}>投影</Link><Link href="/tetris-adjust">調整</Link><Link href="/tutorial">?</Link></div>
       </section>}
 
-      <section className="tetris-layout">
-        <div className="tetris-board-column">
-          <div className="tetris-board player-video-board" aria-label="投影されたテトリスを確認するVDO.Ninja映像">
-            {streamId.trim() ? <iframe className="tetris-video" src={videoUrl} title="VDO.Ninja game field" allow="autoplay; fullscreen" /> : <div className="tetris-video-placeholder">NO VIDEO SIGNAL</div>}
-            <div className="tetris-scanlines" />
-            <div className="tetris-grid player-tetris-grid" style={{ gridTemplateColumns: `repeat(${COLS}, 1fr)`, gridTemplateRows: `repeat(${ROWS}, 1fr)` }} aria-hidden="true">
-              {Array.from({ length: ROWS * COLS }, (_, index) => <span key={index} className="tetris-cell" />)}
-            </div>
-            {game.status !== "running" && (
-              <button className="tetris-overlay" onClick={toggleGame}>
-                <small>{game.status === "gameover" ? "GAME OVER" : game.status === "paused" ? "PAUSED" : "VIDEO TETRIS"}</small>
-                <strong>{game.status === "gameover" ? "もう一度" : game.status === "paused" ? "つづける" : "タップして開始"}</strong>
-              </button>
-            )}
+      <section className="arcade-cabinet">
+        <div className="arcade-top-rail">
+          <button className="arcade-module hold-module" onPointerDown={event => { event.preventDefault(); holdPiece(); }} aria-label="ホールド">
+            <b>HOLD</b><PiecePreview kind={holdKind} />
+          </button>
+          <div className="arcade-avatar" aria-hidden="true"><span>た</span></div>
+          <div className="arcade-module next-module">
+            <b>NEXT</b><PiecePreview kind={game.next} />
           </div>
         </div>
 
-        <aside className="tetris-console">
-          <div className="tetris-scoreboard">
-            <div><span>SCORE</span><strong>{String(game.score).padStart(6, "0")}</strong></div>
-            <div><span>LINES</span><strong>{String(game.lines).padStart(2, "0")}</strong></div>
+        <div className="arcade-play-row">
+          <div className="arcade-board-frame">
+            <div className="tetris-board player-video-board" aria-label="投影されたテトリスを確認するVDO.Ninja映像">
+              {streamId.trim() ? <iframe className="tetris-video" src={videoUrl} title="VDO.Ninja game field" allow="autoplay; fullscreen" /> : <div className="tetris-video-placeholder">NO SIGNAL</div>}
+              <div className="tetris-scanlines" />
+              <div className="tetris-grid player-tetris-grid" style={{ gridTemplateColumns: `repeat(${COLS}, 1fr)`, gridTemplateRows: `repeat(${ROWS}, 1fr)` }} aria-hidden="true">
+                {Array.from({ length: ROWS * COLS }, (_, index) => <span key={index} className="tetris-cell" />)}
+              </div>
+              {game.status !== "running" && (
+                <button className="tetris-overlay arcade-overlay" onClick={toggleGame}>
+                  <small>{game.status === "gameover" ? "GAME OVER" : game.status === "paused" ? "PAUSED" : "READY"}</small>
+                  <strong>{game.status === "gameover" ? "RETRY" : game.status === "paused" ? "CONTINUE" : "START"}</strong>
+                </button>
+              )}
+            </div>
           </div>
 
+          <aside className="arcade-side-rail">
+            <div className="arcade-queue" aria-hidden="true">
+              {(["Z", "S", "O", "J", "T"] as PieceKind[]).map(kind => <div key={kind}><PiecePreview kind={kind} /></div>)}
+            </div>
+            <div className="arcade-level"><span>LEVEL</span><strong>{level}</strong></div>
+            <div className="arcade-stat"><span>SCORE</span><strong>{String(game.score).padStart(6, "0")}</strong></div>
+            <div className="arcade-stat"><span>LINES</span><strong>{String(game.lines).padStart(2, "0")}</strong></div>
+            <div className="arcade-time"><span>TIME</span><strong>{time}</strong></div>
+          </aside>
+        </div>
+
+        <div className="arcade-controls">
           <div className="tetris-touch-controls" aria-label="テトリス操作">
             <button className="rotate" aria-label="回転" onPointerDown={event => { event.preventDefault(); tap(rotatePiece); }}><span>↻</span></button>
             <button aria-label="左" onPointerDown={event => { event.preventDefault(); tap(state => moveSide(state, -1)); }}><span>←</span></button>
@@ -239,9 +297,8 @@ export default function TetrisPage() {
             <button aria-label="右" onPointerDown={event => { event.preventDefault(); tap(state => moveSide(state, 1)); }}><span>→</span></button>
             <button className="drop" aria-label="一気に落とす" onPointerDown={event => { event.preventDefault(); tap(hardDrop); }}><span>⇊</span></button>
           </div>
-
-          <button className="tetris-pause" onClick={toggleGame}>{game.status === "running" ? "一時停止" : game.status === "gameover" ? "もう一度遊ぶ" : "ゲームを始める"}</button>
-        </aside>
+          <button className="tetris-pause" onClick={toggleGame}>{game.status === "running" ? "PAUSE" : "PLAY"}</button>
+        </div>
       </section>
     </main>
   );

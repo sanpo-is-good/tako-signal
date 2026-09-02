@@ -2901,6 +2901,10 @@ input {
   image-rendering: pixelated;
   pointer-events: none;
   user-select: none;
+  display: block;
+  opacity: 1;
+  position: relative;
+  z-index: 2;
 }
 .icon-actions-four { grid-template-columns: repeat(2, 1fr); }
 .opinion-live-panel { padding: 10px !important; }
@@ -3032,4 +3036,234 @@ input {
   .tetris-adjust-panel { border-left: 0; border-top: 1px solid rgba(255,255,255,.14); }
   .tutorial-icons { grid-template-columns: repeat(3, 1fr); }
   .tutorial-steps { grid-template-columns: 1fr; }
+}
+/* Neon arcade Tetris player */
+.arcade-tetris {
+  background:
+    linear-gradient(35deg, transparent 45%, rgba(0,196,255,.13) 46%, rgba(0,196,255,.13) 48%, transparent 49%) 0 0 / 128px 76px,
+    linear-gradient(-35deg, transparent 45%, rgba(0,196,255,.13) 46%, rgba(0,196,255,.13) 48%, transparent 49%) 0 0 / 128px 76px,
+    radial-gradient(circle at 50% 0, #102d47, #02040b 62%);
+}
+.arcade-header {
+  border-bottom: 2px solid #18c7ff;
+  background: rgba(0,5,15,.88);
+  box-shadow: 0 0 24px rgba(24,199,255,.3);
+}
+.arcade-cabinet {
+  width: min(1180px, calc(100vw - 28px));
+  min-height: calc(100dvh - 68px);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  align-content: center;
+  gap: 10px;
+  margin: 0 auto;
+  padding: 14px max(12px, env(safe-area-inset-right)) max(14px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+}
+.arcade-top-rail {
+  width: min(76vw, 780px);
+  display: grid;
+  grid-template-columns: 138px 84px 180px;
+  align-items: end;
+  gap: 10px;
+  margin: 0 auto;
+}
+.arcade-module,
+.arcade-avatar {
+  border: 5px solid #22c8ff;
+  background: linear-gradient(180deg, #43d2ff, #087ebf);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.45), 0 0 18px rgba(34,200,255,.45);
+}
+.arcade-module {
+  min-height: 78px;
+  display: grid;
+  grid-template-rows: auto 1fr;
+  padding: 4px 7px 7px;
+  border-radius: 15px;
+  color: #05101d;
+}
+button.arcade-module { width: 100%; font: inherit; cursor: pointer; touch-action: manipulation; }
+.arcade-module > b {
+  text-align: center;
+  font: 950 18px/1 var(--mono);
+  letter-spacing: -.05em;
+  text-shadow: 0 1px rgba(255,255,255,.5);
+}
+.arcade-avatar {
+  width: 84px;
+  height: 84px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+.arcade-avatar span {
+  width: 62px;
+  height: 62px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #fff1ca;
+  color: #ef4c69;
+  box-shadow: inset 0 -8px 0 #ffb17e;
+  font-size: 33px;
+  font-weight: 950;
+}
+.arcade-piece-preview {
+  width: 82px;
+  height: 48px;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  align-self: center;
+  justify-self: center;
+  padding: 4px;
+  border: 3px solid #07111d;
+  border-radius: 9px;
+  background: #02050a;
+}
+.arcade-piece-preview > span {
+  position: relative;
+  margin: 1px;
+  border-radius: 2px;
+}
+.arcade-piece-preview > span[class*="block-"] {
+  border: 1px solid rgba(255,255,255,.82);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.2), 0 0 8px currentColor;
+}
+.arcade-play-row {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 780px) 150px;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+}
+.arcade-board-frame {
+  min-width: 0;
+  padding: 10px;
+  border: 8px solid #1fc8ff;
+  border-radius: 14px 14px 22px 22px;
+  background: linear-gradient(180deg, #13aee6, #087ab7);
+  box-shadow: inset 0 0 0 3px rgba(255,255,255,.45), 0 0 34px rgba(31,200,255,.42);
+}
+.arcade-board-frame .tetris-board {
+  width: 100%;
+  max-width: none;
+  border: 3px solid #01101c;
+  border-radius: 4px;
+  box-shadow: inset 0 0 18px #000;
+}
+.arcade-board-frame .player-tetris-grid {
+  inset: 3%;
+  gap: 2.5%;
+}
+.arcade-board-frame .player-tetris-grid .tetris-cell {
+  border: 2px solid rgba(33,199,255,.23);
+  box-shadow: inset 0 0 8px rgba(0,0,0,.75) !important;
+}
+.arcade-overlay {
+  background: rgba(0,4,12,.64);
+  text-shadow: 0 0 16px #13d4ff;
+}
+.arcade-overlay small { color: #ff4d80; font-size: 13px; }
+.arcade-overlay strong { color: #fff; font: 950 clamp(28px, 5vw, 58px)/1 var(--mono); }
+.arcade-side-rail {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+.arcade-queue {
+  display: grid;
+  gap: 6px;
+}
+.arcade-queue > div {
+  min-height: 50px;
+  display: grid;
+  place-items: center;
+  padding: 3px 6px;
+  border: 5px solid #1fc8ff;
+  border-radius: 14px;
+  background: #03101e;
+  box-shadow: 0 0 14px rgba(31,200,255,.35);
+}
+.arcade-queue .arcade-piece-preview {
+  width: 70px;
+  height: 40px;
+  padding: 2px;
+  border: 0;
+}
+.arcade-level,
+.arcade-stat,
+.arcade-time {
+  display: grid;
+  place-items: center;
+  padding: 8px;
+  border: 5px solid #f042d4;
+  border-radius: 15px;
+  background: linear-gradient(180deg, #bc35aa, #6d1769);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.25), 0 0 18px rgba(240,66,212,.3);
+}
+.arcade-side-rail span { color: #140617; font: 950 12px/1 var(--mono); }
+.arcade-side-rail strong { color: #fff; font: 950 27px/1 var(--mono); text-shadow: 0 0 9px rgba(255,255,255,.5); }
+.arcade-stat { border-color: #a452ff; background: linear-gradient(#7246d7,#342478); }
+.arcade-stat strong { font-size: 17px; }
+.arcade-time {
+  margin-top: auto;
+  border-color: #72d928;
+  background: linear-gradient(#69c725,#317d13);
+}
+.arcade-time strong { font-size: 17px; }
+.arcade-controls {
+  width: min(920px, 100%);
+  display: grid;
+  grid-template-columns: 1fr 130px;
+  gap: 12px;
+  margin: 0 auto;
+}
+.arcade-controls .tetris-touch-controls {
+  min-height: 82px;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: 1fr;
+  gap: 8px;
+}
+.arcade-controls .tetris-touch-controls button,
+.arcade-controls .tetris-touch-controls .rotate,
+.arcade-controls .tetris-touch-controls .drop,
+.arcade-controls .tetris-touch-controls button:nth-child(2),
+.arcade-controls .tetris-touch-controls button:nth-child(3),
+.arcade-controls .tetris-touch-controls button:nth-child(4) {
+  grid-column: auto;
+  grid-row: 1;
+  border: 4px solid #1fc8ff;
+  border-radius: 15px;
+  background: linear-gradient(180deg, #163e63, #071b31);
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.12), 0 5px 0 #03101d, 0 0 12px rgba(31,200,255,.25);
+}
+.arcade-controls .tetris-touch-controls .rotate { order: 4; background: linear-gradient(#7155ed,#35237f); border-color: #9a7cff; }
+.arcade-controls .tetris-touch-controls .drop { order: 5; background: linear-gradient(#ff668b,#b51d4d); border-color: #ff8aaa; }
+.arcade-controls .tetris-pause {
+  min-height: 82px;
+  border: 4px solid #70db27;
+  border-radius: 15px;
+  background: linear-gradient(#71d82a,#347e14);
+  color: white;
+  font: 950 14px/1 var(--mono);
+  box-shadow: 0 5px 0 #173b09, 0 0 12px rgba(112,219,39,.3);
+}
+.arcade-controls .tetris-pause::after { content: none; }
+
+@media (max-width: 820px), (orientation: portrait) {
+  .arcade-tetris { overflow: auto; }
+  .arcade-cabinet { min-height: auto; }
+  .arcade-top-rail { width: min(94vw, 620px); grid-template-columns: 1fr 72px 1.2fr; }
+  .arcade-avatar { width: 72px; height: 72px; }
+  .arcade-avatar span { width: 52px; height: 52px; font-size: 26px; }
+  .arcade-play-row { grid-template-columns: minmax(0, 1fr); }
+  .arcade-side-rail { display: grid; grid-template-columns: repeat(4, 1fr); }
+  .arcade-queue { display: none; }
+  .arcade-time { margin-top: 0; }
+  .arcade-controls { grid-template-columns: 1fr; }
+  .arcade-controls .tetris-pause { min-height: 56px; }
 }

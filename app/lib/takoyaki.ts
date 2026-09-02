@@ -61,8 +61,8 @@ export const ACTIONS: Record<ActionKind, { label: string; short: string; instruc
   serve: { label: "焼き上げる", short: "SERVE", instruction: "指定のたこ焼きを取り出す", glyph: "上", effect: "serve" },
 };
 export const ACTION_ICONS: Record<ActionKind, string> = {
-  batter: "/icons/batter.png", octopus: "/icons/octopus.png", tenkasu: "/icons/tenkasu.png", greenOnion: "/icons/green-onion.png", turn: "/icons/turn.png", serve: "/icons/serve.png",
-  mischiefSpin: "/icons/turn.png", mischiefTenkasu: "/icons/tenkasu.png", mischiefWait: "/icons/batter.png", mischiefRush: "/icons/serve.png", add: "/icons/octopus.png",
+  batter: "/icons/batter.png?v=3", octopus: "/icons/octopus.png?v=3", tenkasu: "/icons/tenkasu.png?v=3", greenOnion: "/icons/green-onion.png?v=3", turn: "/icons/turn.png?v=3", serve: "/icons/serve.png?v=3",
+  mischiefSpin: "/icons/turn.png?v=3", mischiefTenkasu: "/icons/tenkasu.png?v=3", mischiefWait: "/icons/batter.png?v=3", mischiefRush: "/icons/serve.png?v=3", add: "/icons/octopus.png?v=3",
 };
 export function resolveAssetPath(path: string): string {
   return typeof window !== "undefined" && window.location.pathname.startsWith("/tako-signal") ? `/tako-signal` : path;
