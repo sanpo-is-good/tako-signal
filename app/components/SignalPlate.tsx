@@ -42,7 +42,7 @@ export function SignalPlate({
   const hasVideo = Boolean(streamId?.trim());
   const showVideo = hasVideo && videoEnabled;
   const videoUrl = hasVideo
-    ? `https://vdo.ninja/?view=${encodeURIComponent(streamId!.trim())}&cleanoutput&autostart&muted`
+    ? `https://vdo.ninja/?view=${encodeURIComponent(streamId!.trim())}&cleanoutput&noaudio`
     : "";
 
   const style = transform
