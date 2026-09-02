@@ -6,6 +6,8 @@ import KitchenPage from "../app/kitchen/KitchenPage";
 import PlayerPage from "../app/player/PlayerPage";
 import TetrisPage from "../app/tetris/TetrisPage";
 import TetrisProjectorPage from "../app/tetris-projector/TetrisProjectorPage";
+import TetrisAdjustPage from "../app/tetris-adjust/TetrisAdjustPage";
+import TutorialPage from "../app/tutorial/TutorialPage";
 import "../app/globals.css";
 
 const BASE_PATH = "/tako-signal";
@@ -36,6 +38,8 @@ const routes: Record<string, ComponentType> = {
   "/debug": DebugPage,
   "/tetris": TetrisPage,
   "/tetris-projector": TetrisProjectorPage,
+  "/tetris-adjust": TetrisAdjustPage,
+  "/tutorial": TutorialPage,
 };
 
 const Page = routes[currentRoute()] || NotFound;

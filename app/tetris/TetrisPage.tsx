@@ -5,9 +5,8 @@ import { useEffect, useMemo, useState } from "react";
 import { ConnectionPill } from "../components/ConnectionPill";
 import { useSignalChannel } from "../hooks/useSignalChannel";
 import { DEFAULT_ROOM, createMessage, sanitizeRoom } from "../lib/takoyaki";
+import { TETRIS_COLS as COLS, TETRIS_ROWS as ROWS } from "../lib/tetris";
 
-const COLS = 10;
-const ROWS = 20;
 const KINDS = ["I", "O", "T", "S", "Z", "J", "L"] as const;
 type PieceKind = (typeof KINDS)[number];
 type Cell = PieceKind | null;
@@ -43,7 +42,7 @@ const BASE_CELLS: Record<PieceKind, Point[]> = {
 
 const EMPTY_BOARD = () => Array.from({ length: ROWS }, () => Array<Cell>(COLS).fill(null));
 const randomKind = () => KINDS[Math.floor(Math.random() * KINDS.length)];
-const spawn = (kind: PieceKind): Piece => ({ kind, rotation: 0, x: 3, y: 0 });
+const spawn = (kind: PieceKind): Piece => ({ kind, rotation: 0, x: Math.max(0, Math.floor((COLS - 4) / 2)), y: 0 });
 
 function pieceCells(piece: Piece): Point[] {
   if (piece.kind === "O") return BASE_CELLS.O;
@@ -131,6 +130,7 @@ export default function TetrisPage() {
   const [streamId, setStreamId] = useState("takokuri1");
   const [room, setRoom] = useState(DEFAULT_ROOM);
   const [game, setGame] = useState<GameState>(() => newGame());
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const { connection, send } = useSignalChannel(room, () => {});
 
   useEffect(() => {
@@ -195,28 +195,26 @@ export default function TetrisPage() {
     <main className="tetris-shell">
       <header className="tetris-header">
         <Link href="/" className="wordmark"><span className="wordmark-dot" />TAKO SIGNAL</Link>
-        <div><span>ALTERNATIVE GAME</span><b>VIDEO TETRIS</b></div>
+        <div><b>VIDEO TETRIS</b></div>
         <div className="tetris-header-buttons">
           <ConnectionPill connection={connection} />
-          <Link href={"/tetris-projector?room=" + encodeURIComponent(room)}>PROJECTOR ↗</Link>
-          <button onClick={() => setGame(newGame("running"))}>RESTART</button>
+          <button onClick={() => setSettingsOpen(value => !value)} aria-label="設定">⚙</button>
+          <button onClick={() => setGame(newGame("running"))} aria-label="リスタート">↺</button>
         </div>
       </header>
 
+      {settingsOpen && <section className="tetris-settings">
+        <label><span>ROOM</span><input value={room} onChange={event => { const value = sanitizeRoom(event.target.value); setRoom(value); localStorage.setItem("tako-room", value); }} /></label>
+        <label><span>STREAM</span><input value={streamId} onChange={event => { setStreamId(event.target.value); localStorage.setItem("tako-stream", event.target.value); }} /></label>
+        <div><Link href={"/tetris-projector?room=" + encodeURIComponent(room)}>投影</Link><Link href="/tetris-adjust">調整</Link><Link href="/tutorial">?</Link></div>
+      </section>}
+
       <section className="tetris-layout">
         <div className="tetris-board-column">
-          <div className="tetris-board-head">
-            <div><p>VDO.NINJA / PLAY FIELD</p><h1>映像を見ながら、投影を動かす。</h1></div>
-            <div className="tetris-source-fields">
-              <label><span>ROOM ID</span><input value={room} onChange={event => { const value = sanitizeRoom(event.target.value); setRoom(value); localStorage.setItem("tako-room", value); }} /></label>
-              <label><span>STREAM ID</span><input value={streamId} onChange={event => { setStreamId(event.target.value); localStorage.setItem("tako-stream", event.target.value); }} /></label>
-            </div>
-          </div>
-
           <div className="tetris-board player-video-board" aria-label="投影されたテトリスを確認するVDO.Ninja映像">
             {streamId.trim() ? <iframe className="tetris-video" src={videoUrl} title="VDO.Ninja game field" allow="autoplay; fullscreen" /> : <div className="tetris-video-placeholder">NO VIDEO SIGNAL</div>}
             <div className="tetris-scanlines" />
-            <div className="tetris-grid player-tetris-grid" aria-hidden="true">
+            <div className="tetris-grid player-tetris-grid" style={{ gridTemplateColumns: `repeat(${COLS}, 1fr)`, gridTemplateRows: `repeat(${ROWS}, 1fr)` }} aria-hidden="true">
               {Array.from({ length: ROWS * COLS }, (_, index) => <span key={index} className="tetris-cell" />)}
             </div>
             {game.status !== "running" && (
@@ -234,23 +232,15 @@ export default function TetrisPage() {
             <div><span>LINES</span><strong>{String(game.lines).padStart(2, "0")}</strong></div>
           </div>
 
-          <section className="tetris-projection-note">
-            <p>PROJECTION ONLY</p>
-            <strong>ブロックは投映画面だけに表示</strong>
-            <small>実物へ投影されたブロックを、VDO.Ninja映像で見ながら操作します。</small>
-            <Link href={"/tetris-projector?room=" + encodeURIComponent(room)}>投映画面を開く ↗</Link>
-          </section>
-
           <div className="tetris-touch-controls" aria-label="テトリス操作">
-            <button className="rotate" onPointerDown={event => { event.preventDefault(); tap(rotatePiece); }}><span>↻</span><b>回転</b></button>
-            <button onPointerDown={event => { event.preventDefault(); tap(state => moveSide(state, -1)); }}><span>←</span><b>左</b></button>
-            <button onPointerDown={event => { event.preventDefault(); tap(stepDown); }}><span>↓</span><b>下</b></button>
-            <button onPointerDown={event => { event.preventDefault(); tap(state => moveSide(state, 1)); }}><span>→</span><b>右</b></button>
-            <button className="drop" onPointerDown={event => { event.preventDefault(); tap(hardDrop); }}><span>⇊</span><b>一気に落とす</b></button>
+            <button className="rotate" aria-label="回転" onPointerDown={event => { event.preventDefault(); tap(rotatePiece); }}><span>↻</span></button>
+            <button aria-label="左" onPointerDown={event => { event.preventDefault(); tap(state => moveSide(state, -1)); }}><span>←</span></button>
+            <button aria-label="下" onPointerDown={event => { event.preventDefault(); tap(stepDown); }}><span>↓</span></button>
+            <button aria-label="右" onPointerDown={event => { event.preventDefault(); tap(state => moveSide(state, 1)); }}><span>→</span></button>
+            <button className="drop" aria-label="一気に落とす" onPointerDown={event => { event.preventDefault(); tap(hardDrop); }}><span>⇊</span></button>
           </div>
 
           <button className="tetris-pause" onClick={toggleGame}>{game.status === "running" ? "一時停止" : game.status === "gameover" ? "もう一度遊ぶ" : "ゲームを始める"}</button>
-          <p className="tetris-key-hint">KEYBOARD　← → ↓ / ↑ ROTATE / SPACE DROP / P PAUSE</p>
         </aside>
       </section>
     </main>

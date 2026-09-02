@@ -106,17 +106,12 @@ export default function PlayerPage() {
         <section className="settings-drawer">
           <label><span>ルームID</span><div className="inline-field"><input value={roomInput} onChange={event => setRoomInput(event.target.value)} /><button onClick={applyRoom}>接続</button></div></label>
           <label><span>VDO.Ninja Stream ID</span><input value={streamId} onChange={event => saveStream(event.target.value)} placeholder="takokuri1" /></label>
-          <div className="settings-note">位置調整画面と投影画面も同じルームIDを使います。</div>
+          <div className="settings-note">位置調整画面と投影画面も同じルームIDを使います。 <Link href="/tutorial">遊び方を見る</Link></div>
         </section>
       )}
 
       <section className="player-workspace">
         <div className="live-panel opinion-live-panel">
-          <div className="panel-heading">
-            <div><p className="micro-label">TEPPAN 4 × 5 / LIVE</p><h1>意見を選んで、たこ焼きにタッチ</h1></div>
-            <span className={`mode-chip mode-chip-${mode}`}>{mode === "control" ? "完全操縦" : "おまかせ"}</span>
-          </div>
-
           <div className="opinion-plate-frame">
             <SignalPlate
               streamId={streamId}
@@ -125,22 +120,17 @@ export default function PlayerPage() {
               activeAction={sentSignal?.action}
               cueId={sentSignal?.id}
               interactive
+              traceMode={action === "batter"}
               onSelect={sendOpinion}
               holeOffsets={holeOffsets}
             />
           </div>
 
-          <div className="tap-live-hint">
-            <span>◎</span>
-            <p><strong>たこ焼きを直接タップ</strong><small>選んだ意見が、その場所の光になります</small></p>
-          </div>
         </div>
 
         <PlayerControls
           mode={mode}
           action={action}
-          lastHole={selectedHole}
-          signalSent={Boolean(sentSignal)}
           onModeChange={changeMode}
           onActionChange={setAction}
         />

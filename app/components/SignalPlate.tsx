@@ -1,15 +1,19 @@
 "use client";
 
-import { Fragment } from "react";
+import { Fragment, useRef } from "react";
 import { ACTIONS, HOLES, type ActionKind, type HoleOffsets } from "../lib/takoyaki";
+
+type ActiveCue = { id: string; hole: number; action: ActionKind };
 
 interface PlateProps {
   activeHole?: number;
   activeAction?: ActionKind;
+  activeCues?: ActiveCue[];
   cueId?: string;
   selectedHole?: number;
   streamId?: string;
   interactive?: boolean;
+  traceMode?: boolean;
   calibration?: boolean;
   onSelect?: (hole: number) => void;
   holeOffsets?: HoleOffsets;
@@ -20,16 +24,19 @@ interface PlateProps {
 export function SignalPlate({
   activeHole,
   activeAction = "turn",
+  activeCues = [],
   cueId,
   selectedHole,
   streamId,
   interactive = false,
+  traceMode = false,
   calibration = false,
   onSelect,
   holeOffsets = {},
   onHolePositionChange,
   transform,
 }: PlateProps) {
+  const lastTraceHole = useRef<number | undefined>(undefined);
   const hasVideo = Boolean(streamId?.trim());
   const videoUrl = hasVideo
     ? `https://vdo.ninja/?view=${encodeURIComponent(streamId!.trim())}&cleanoutput&autoplay&muted`
@@ -39,40 +46,57 @@ export function SignalPlate({
     ? { transform: `translate(${transform.x}px, ${transform.y}px) scale(${transform.scale}) rotate(${transform.rotate}deg)` }
     : undefined;
 
+  const traceAt = (clientX: number, clientY: number, layer: HTMLElement) => {
+    const rect = layer.getBoundingClientRect();
+    const x = ((clientX - rect.left) / rect.width) * 100;
+    const y = ((clientY - rect.top) / rect.height) * 100;
+    let nearest = HOLES[0];
+    let distance = Number.POSITIVE_INFINITY;
+    HOLES.forEach(hole => {
+      const offset = holeOffsets[hole.id] || { x: 0, y: 0 };
+      const nextDistance = Math.hypot(x - hole.x - offset.x, y - hole.y - offset.y);
+      if (nextDistance < distance) { nearest = hole; distance = nextDistance; }
+    });
+    if (nearest && nearest.id !== lastTraceHole.current) {
+      lastTraceHole.current = nearest.id;
+      onSelect?.(nearest.id);
+    }
+  };
+
   return (
-    <div className={`signal-plate ${hasVideo ? "has-video" : "simulated"}`} style={style}>
+    <div className={`signal-plate ${hasVideo ? "has-video" : "simulated"} ${traceMode ? "trace-mode" : ""}`} style={style}>
       <div className="plate-surface">
         {hasVideo ? (
-          <iframe
-            className="vdo-frame"
-            src={videoUrl}
-            title="VDO.Ninja たこ焼きライブ映像"
-            allow="autoplay; fullscreen; camera; microphone"
-          />
+          <iframe className="vdo-frame" src={videoUrl} title="VDO.Ninja たこ焼きライブ映像" allow="autoplay; fullscreen; camera; microphone" />
         ) : (
           <div className="simulated-feed" aria-label="映像未設定のシミュレーション">
-            <span className="sim-light sim-light-one" />
-            <span className="sim-light sim-light-two" />
+            <span className="sim-light sim-light-one" /><span className="sim-light sim-light-two" />
             <span className="sim-caption">SIMULATED LIVE FEED</span>
           </div>
         )}
 
-        <div className="hole-layer">
+        <div
+          className="hole-layer"
+          onPointerDown={traceMode ? event => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); lastTraceHole.current = undefined; traceAt(event.clientX, event.clientY, event.currentTarget); } : undefined}
+          onPointerMove={traceMode ? event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) traceAt(event.clientX, event.clientY, event.currentTarget); } : undefined}
+          onPointerUp={traceMode ? event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); lastTraceHole.current = undefined; } : undefined}
+        >
           {HOLES.map(hole => {
-            const isActive = activeHole === hole.id;
+            const cue = activeCues.filter(item => item.hole === hole.id).at(-1)
+              || (activeHole === hole.id ? { id: cueId || String(hole.id), hole: hole.id, action: activeAction } : undefined);
+            const isActive = Boolean(cue);
+            const effectAction = cue?.action || activeAction;
             const isSelected = selectedHole === hole.id;
             const Element = interactive ? "button" : "div";
             const offset = holeOffsets[hole.id] || { x: 0, y: 0 };
-            const left = hole.x + offset.x;
-            const top = hole.y + offset.y;
             return (
               <Element
                 type={interactive ? "button" : undefined}
-                className={`plate-hole ${isActive ? `cue-active cue-${ACTIONS[activeAction].effect}` : ""} ${isSelected ? "selected" : ""} ${calibration ? "calibration-hole" : ""} ${onHolePositionChange ? "position-editable" : ""}`}
-                style={{ left: `${left}%`, top: `${top}%` }}
+                className={`plate-hole ${isActive ? `cue-active cue-${ACTIONS[effectAction].effect}` : ""} ${isSelected ? "selected" : ""} ${calibration ? "calibration-hole" : ""} ${onHolePositionChange ? "position-editable" : ""}`}
+                style={{ left: `${hole.x + offset.x}%`, top: `${hole.y + offset.y}%` }}
                 key={hole.id}
-                onClick={interactive ? event => { if (event.detail === 0) onSelect?.(hole.id); } : undefined}
-                onPointerDown={onHolePositionChange ? event => { event.currentTarget.setPointerCapture(event.pointerId); onSelect?.(hole.id); } : interactive ? event => { event.preventDefault(); onSelect?.(hole.id); } : undefined}
+                onClick={interactive && !traceMode ? event => { if (event.detail === 0) onSelect?.(hole.id); } : undefined}
+                onPointerDown={onHolePositionChange ? event => { event.currentTarget.setPointerCapture(event.pointerId); onSelect?.(hole.id); } : interactive && !traceMode ? event => { event.preventDefault(); onSelect?.(hole.id); } : undefined}
                 onPointerMove={onHolePositionChange ? event => {
                   if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
                   const layer = event.currentTarget.parentElement;
@@ -88,21 +112,17 @@ export function SignalPlate({
                 <span className="takoyaki-ball" />
                 {(interactive || calibration || isActive) && <span className="hole-number">{String(hole.id).padStart(2, "0")}</span>}
                 {isActive && (
-                  <Fragment key={cueId || `${hole.id}-${activeAction}`}>
-                    <span className="cue-ring cue-ring-one" />
-                    <span className="cue-ring cue-ring-two" />
-                    <span className="cue-label">{ACTIONS[activeAction].short}</span>
+                  <Fragment key={cue?.id}>
+                    <span className="cue-ring cue-ring-one" /><span className="cue-ring cue-ring-two" />
+                    <span className="cue-label">{ACTIONS[effectAction].short}</span>
                   </Fragment>
                 )}
               </Element>
             );
           })}
         </div>
-
-        <span className="plate-corner corner-tl" />
-        <span className="plate-corner corner-tr" />
-        <span className="plate-corner corner-bl" />
-        <span className="plate-corner corner-br" />
+        <span className="plate-corner corner-tl" /><span className="plate-corner corner-tr" />
+        <span className="plate-corner corner-bl" /><span className="plate-corner corner-br" />
       </div>
     </div>
   );

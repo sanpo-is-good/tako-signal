@@ -60,6 +60,13 @@ export const ACTIONS: Record<ActionKind, { label: string; short: string; instruc
   mischiefWait: { label: "まだ焼いて！", short: "WAIT", instruction: "意見の合図：もう少し焼いてほしい", glyph: "待", effect: "turn" },
   serve: { label: "焼き上げる", short: "SERVE", instruction: "指定のたこ焼きを取り出す", glyph: "上", effect: "serve" },
 };
+export const ACTION_ICONS: Record<ActionKind, string> = {
+  batter: "/icons/batter.png", octopus: "/icons/octopus.png", tenkasu: "/icons/tenkasu.png", greenOnion: "/icons/green-onion.png", turn: "/icons/turn.png", serve: "/icons/serve.png",
+  mischiefSpin: "/icons/turn.png", mischiefTenkasu: "/icons/tenkasu.png", mischiefWait: "/icons/batter.png", mischiefRush: "/icons/serve.png", add: "/icons/octopus.png",
+};
+export function resolveAssetPath(path: string): string {
+  return typeof window !== "undefined" && window.location.pathname.startsWith("/tako-signal") ? `/tako-signal` : path;
+}
 export const CONTROL_ACTIONS: ActionKind[] = ["batter", "octopus", "tenkasu", "greenOnion", "turn", "serve"];
 export const MISCHIEF_ACTIONS: ActionKind[] = ["mischiefSpin", "mischiefTenkasu", "mischiefWait", "mischiefRush"];
 export const HOLE_OFFSETS_KEY = "tako-hole-offsets-v2";

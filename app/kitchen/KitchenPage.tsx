@@ -19,11 +19,13 @@ import {
 type TransformState = { x: number; y: number; scale: number; rotate: number };
 const DEFAULT_TRANSFORM: TransformState = { x: 0, y: 0, scale: 1, rotate: 0 };
 const SIGNAL_DURATION_MS = 1800;
+const BATTER_DURATION_MS = 3200;
 
 export default function KitchenPage() {
   const [room, setRoom] = useState(DEFAULT_ROOM);
   const [roomInput, setRoomInput] = useState(DEFAULT_ROOM);
   const [current, setCurrent] = useState<SignalMessage | null>(null);
+  const [batterCues, setBatterCues] = useState<SignalMessage[]>([]);
   const [calibration, setCalibration] = useState(false);
   const [projectorMode, setProjectorMode] = useState(false);
   const [testHole, setTestHole] = useState(6);
@@ -52,7 +54,12 @@ export default function KitchenPage() {
 
   const onMessage = useCallback((message: SignalMessage) => {
     if (message.role === "player" && message.kind === "request" && message.hole && message.action) {
-      setCurrent(message);
+      if (message.action === "batter") {
+        setBatterCues(cues => [...cues.filter(cue => cue.hole !== message.hole), message]);
+        window.setTimeout(() => setBatterCues(cues => cues.filter(cue => cue.id !== message.id)), BATTER_DURATION_MS);
+      } else {
+        setCurrent(message);
+      }
     }
   }, []);
 
@@ -75,6 +82,7 @@ export default function KitchenPage() {
     setRoom(next);
     setRoomInput(next);
     setCurrent(null);
+    setBatterCues([]);
     localStorage.setItem("tako-room", next);
     const basePath = window.location.pathname.startsWith("/tako-signal/") ? "/tako-signal" : "";
     window.history.replaceState(null, "", `${basePath}/kitchen?room=${encodeURIComponent(next)}`);
@@ -130,6 +138,7 @@ export default function KitchenPage() {
           </div>
           <SignalPlate
             activeHole={activeHole}
+            activeCues={batterCues.flatMap(cue => cue.hole && cue.action ? [{ id: cue.id, hole: cue.hole, action: cue.action }] : [])}
             activeAction={activeAction}
             cueId={current?.id}
             calibration={calibration}
@@ -139,7 +148,7 @@ export default function KitchenPage() {
             onHolePositionChange={calibration ? updateHoleOffset : undefined}
             transform={transform}
           />
-          {!current && !calibration && <div className="standby-mark"><span /><p>WAITING FOR SIGNAL</p></div>}
+          {!current && batterCues.length === 0 && !calibration && <div className="standby-mark"><span /><p>WAITING FOR SIGNAL</p></div>}
         </div>
 
         <aside className="operator-panel auto-operator">
