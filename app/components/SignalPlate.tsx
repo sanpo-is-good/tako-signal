@@ -12,6 +12,7 @@ interface PlateProps {
   cueId?: string;
   selectedHole?: number;
   streamId?: string;
+  videoEnabled?: boolean;
   interactive?: boolean;
   traceMode?: boolean;
   calibration?: boolean;
@@ -28,6 +29,7 @@ export function SignalPlate({
   cueId,
   selectedHole,
   streamId,
+  videoEnabled = true,
   interactive = false,
   traceMode = false,
   calibration = false,
@@ -38,8 +40,9 @@ export function SignalPlate({
 }: PlateProps) {
   const lastTraceHole = useRef<number | undefined>(undefined);
   const hasVideo = Boolean(streamId?.trim());
+  const showVideo = hasVideo && videoEnabled;
   const videoUrl = hasVideo
-    ? `https://vdo.ninja/?view=${encodeURIComponent(streamId!.trim())}&cleanoutput&autoplay&muted`
+    ? `https://vdo.ninja/?view=${encodeURIComponent(streamId!.trim())}&cleanoutput&autostart&muted`
     : "";
 
   const style = transform
@@ -64,14 +67,19 @@ export function SignalPlate({
   };
 
   return (
-    <div className={`signal-plate ${hasVideo ? "has-video" : "simulated"} ${traceMode ? "trace-mode" : ""}`} style={style}>
+    <div className={`signal-plate ${showVideo ? "has-video" : "simulated"} ${traceMode ? "trace-mode" : ""}`} style={style}>
       <div className="plate-surface">
-        {hasVideo ? (
-          <iframe className="vdo-frame" src={videoUrl} title="VDO.Ninja たこ焼きライブ映像" allow="autoplay; fullscreen; camera; microphone" />
+        {showVideo ? (
+          <iframe
+            className="vdo-frame"
+            src={videoUrl}
+            title="VDO.Ninja たこ焼きライブ映像"
+            allow="autoplay; fullscreen; picture-in-picture; camera; microphone"
+          />
         ) : (
-          <div className="simulated-feed" aria-label="映像未設定のシミュレーション">
+          <div className="simulated-feed" aria-label={hasVideo ? "映像再生待機中" : "映像未設定のシミュレーション"}>
             <span className="sim-light sim-light-one" /><span className="sim-light sim-light-two" />
-            <span className="sim-caption">SIMULATED LIVE FEED</span>
+            <span className="sim-caption">{hasVideo ? "VIDEO READY · START IN SETTINGS" : "SIMULATED LIVE FEED"}</span>
           </div>
         )}
 
