@@ -120,7 +120,7 @@ export default function PlayerPage() {
             </div>
           </label>
           <div className="settings-note">
-            {videoEnabled ? "ライブ映像を再生中です。" : "Stream IDを確認して「映像を再生」を押してください。"}
+            {videoEnabled ? "ライブ映像を再生中です。設定を開いている間は映像上の再生ボタンを直接操作できます。" : "Stream IDを確認して「映像を再生」を押してください。"}
             {" "}位置調整画面と投影画面も同じルームIDを使います。 <Link href="/tutorial">遊び方を見る</Link>
           </div>
         </section>
@@ -136,8 +136,9 @@ export default function PlayerPage() {
               activeHole={sentSignal?.hole}
               activeAction={sentSignal?.action}
               cueId={sentSignal?.id}
-              interactive
-              traceMode={action === "batter"}
+              interactive={!settingsOpen}
+              interactionDisabled={settingsOpen}
+              traceMode={!settingsOpen && action === "batter"}
               onSelect={sendOpinion}
               holeOffsets={holeOffsets}
             />
