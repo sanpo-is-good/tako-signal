@@ -27,6 +27,7 @@ export default function PlayerPage() {
   const [room, setRoom] = useState(DEFAULT_ROOM);
   const [roomInput, setRoomInput] = useState(DEFAULT_ROOM);
   const [streamId, setStreamId] = useState("takokuri1");
+  const [videoEnabled, setVideoEnabled] = useState(false);
   const [selectedHole, setSelectedHole] = useState<number>();
   const [mode, setMode] = useState<GameMode>("control");
   const [action, setAction] = useState<ActionKind>("batter");
@@ -88,7 +89,13 @@ export default function PlayerPage() {
 
   const saveStream = (value: string) => {
     setStreamId(value);
+    setVideoEnabled(false);
     localStorage.setItem("tako-stream", value);
+  };
+
+  const toggleVideo = () => {
+    if (!streamId.trim()) return;
+    setVideoEnabled(value => !value);
   };
 
   return (
@@ -105,8 +112,17 @@ export default function PlayerPage() {
       {settingsOpen && (
         <section className="settings-drawer">
           <label><span>ルームID</span><div className="inline-field"><input value={roomInput} onChange={event => setRoomInput(event.target.value)} /><button onClick={applyRoom}>接続</button></div></label>
-          <label><span>VDO.Ninja Stream ID</span><input value={streamId} onChange={event => saveStream(event.target.value)} placeholder="takokuri1" /></label>
-          <div className="settings-note">位置調整画面と投影画面も同じルームIDを使います。 <Link href="/tutorial">遊び方を見る</Link></div>
+          <label>
+            <span>VDO.Ninja Stream ID</span>
+            <div className="inline-field">
+              <input value={streamId} onChange={event => saveStream(event.target.value)} placeholder="takokuri1" />
+              <button onClick={toggleVideo} disabled={!streamId.trim()}>{videoEnabled ? "映像を停止" : "映像を再生"}</button>
+            </div>
+          </label>
+          <div className="settings-note">
+            {videoEnabled ? "ライブ映像を再生中です。" : "Stream IDを確認して「映像を再生」を押してください。"}
+            {" "}位置調整画面と投影画面も同じルームIDを使います。 <Link href="/tutorial">遊び方を見る</Link>
+          </div>
         </section>
       )}
 
@@ -115,6 +131,7 @@ export default function PlayerPage() {
           <div className="opinion-plate-frame">
             <SignalPlate
               streamId={streamId}
+              videoEnabled={videoEnabled}
               selectedHole={selectedHole}
               activeHole={sentSignal?.hole}
               activeAction={sentSignal?.action}
