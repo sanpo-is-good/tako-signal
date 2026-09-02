@@ -14,6 +14,7 @@ interface PlateProps {
   streamId?: string;
   videoEnabled?: boolean;
   interactive?: boolean;
+  interactionDisabled?: boolean;
   traceMode?: boolean;
   calibration?: boolean;
   onSelect?: (hole: number) => void;
@@ -31,6 +32,7 @@ export function SignalPlate({
   streamId,
   videoEnabled = true,
   interactive = false,
+  interactionDisabled = false,
   traceMode = false,
   calibration = false,
   onSelect,
@@ -85,9 +87,10 @@ export function SignalPlate({
 
         <div
           className="hole-layer"
-          onPointerDown={traceMode ? event => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); lastTraceHole.current = undefined; traceAt(event.clientX, event.clientY, event.currentTarget); } : undefined}
-          onPointerMove={traceMode ? event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) traceAt(event.clientX, event.clientY, event.currentTarget); } : undefined}
-          onPointerUp={traceMode ? event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); lastTraceHole.current = undefined; } : undefined}
+          style={{ pointerEvents: interactionDisabled ? "none" : undefined }}
+          onPointerDown={!interactionDisabled && traceMode ? event => { event.preventDefault(); event.currentTarget.setPointerCapture(event.pointerId); lastTraceHole.current = undefined; traceAt(event.clientX, event.clientY, event.currentTarget); } : undefined}
+          onPointerMove={!interactionDisabled && traceMode ? event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) traceAt(event.clientX, event.clientY, event.currentTarget); } : undefined}
+          onPointerUp={!interactionDisabled && traceMode ? event => { if (event.currentTarget.hasPointerCapture(event.pointerId)) event.currentTarget.releasePointerCapture(event.pointerId); lastTraceHole.current = undefined; } : undefined}
         >
           {HOLES.map(hole => {
             const cue = activeCues.filter(item => item.hole === hole.id).at(-1)
@@ -95,17 +98,17 @@ export function SignalPlate({
             const isActive = Boolean(cue);
             const effectAction = cue?.action || activeAction;
             const isSelected = selectedHole === hole.id;
-            const Element = interactive ? "button" : "div";
+            const Element = interactive && !interactionDisabled ? "button" : "div";
             const offset = holeOffsets[hole.id] || { x: 0, y: 0 };
             return (
               <Element
-                type={interactive ? "button" : undefined}
+                type={interactive && !interactionDisabled ? "button" : undefined}
                 className={`plate-hole ${isActive ? `cue-active cue-${ACTIONS[effectAction].effect}` : ""} ${isSelected ? "selected" : ""} ${calibration ? "calibration-hole" : ""} ${onHolePositionChange ? "position-editable" : ""}`}
                 style={{ left: `${hole.x + offset.x}%`, top: `${hole.y + offset.y}%` }}
                 key={hole.id}
-                onClick={interactive && !traceMode ? event => { if (event.detail === 0) onSelect?.(hole.id); } : undefined}
-                onPointerDown={onHolePositionChange ? event => { event.currentTarget.setPointerCapture(event.pointerId); onSelect?.(hole.id); } : interactive && !traceMode ? event => { event.preventDefault(); onSelect?.(hole.id); } : undefined}
-                onPointerMove={onHolePositionChange ? event => {
+                onClick={interactive && !interactionDisabled && !traceMode ? event => { if (event.detail === 0) onSelect?.(hole.id); } : undefined}
+                onPointerDown={interactionDisabled ? undefined : onHolePositionChange ? event => { event.currentTarget.setPointerCapture(event.pointerId); onSelect?.(hole.id); } : interactive && !traceMode ? event => { event.preventDefault(); onSelect?.(hole.id); } : undefined}
+                onPointerMove={interactionDisabled ? undefined : onHolePositionChange ? event => {
                   if (!event.currentTarget.hasPointerCapture(event.pointerId)) return;
                   const layer = event.currentTarget.parentElement;
                   if (!layer) return;
@@ -114,8 +117,8 @@ export function SignalPlate({
                   const nextY = Math.min(96, Math.max(4, ((event.clientY - rect.top) / rect.height) * 100));
                   onHolePositionChange(hole.id, nextX - hole.x, nextY - hole.y);
                 } : undefined}
-                onPointerUp={onHolePositionChange ? event => event.currentTarget.releasePointerCapture(event.pointerId) : undefined}
-                aria-label={interactive ? `穴 ${hole.id}を選択` : undefined}
+                onPointerUp={interactionDisabled ? undefined : onHolePositionChange ? event => event.currentTarget.releasePointerCapture(event.pointerId) : undefined}
+                aria-label={interactive && !interactionDisabled ? `穴 ${hole.id}を選択` : undefined}
               >
                 <span className="takoyaki-ball" />
                 {(interactive || calibration || isActive) && <span className="hole-number">{String(hole.id).padStart(2, "0")}</span>}
