@@ -3267,3 +3267,443 @@ button.arcade-module { width: 100%; font: inherit; cursor: pointer; touch-action
   .arcade-controls { grid-template-columns: 1fr; }
   .arcade-controls .tetris-pause { min-height: 56px; }
 }
+/* Takoyaki Tetris — polished product UI */
+.takotris-shell {
+  --tt-ink: #241512;
+  --tt-paper: #fff8e9;
+  --tt-cream: #ffe7ac;
+  --tt-orange: #ff6a2a;
+  --tt-red: #e73d35;
+  --tt-green: #35a45a;
+  --tt-line: rgba(54,31,23,.16);
+  min-height: 100dvh;
+  overflow: auto;
+  background:
+    radial-gradient(circle, rgba(231,61,53,.075) 0 2px, transparent 2.5px) 0 0 / 28px 28px,
+    linear-gradient(145deg, #fff9e9 0%, #ffeebf 55%, #ffd796 100%);
+  color: var(--tt-ink);
+  font-family: var(--font-geist-sans), "Hiragino Sans", "Yu Gothic", sans-serif;
+}
+.takotris-nav {
+  position: sticky;
+  z-index: 40;
+  top: 0;
+  height: 66px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 max(22px, env(safe-area-inset-left));
+  border-bottom: 1px solid rgba(54,31,23,.12);
+  background: rgba(255,248,233,.9);
+  box-shadow: 0 8px 28px rgba(115,59,26,.08);
+  backdrop-filter: blur(18px);
+}
+.takotris-brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--tt-ink);
+}
+.takotris-logo {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #ff7740, #e84336);
+  box-shadow: 0 5px 14px rgba(205,59,40,.25);
+}
+.takotris-logo img {
+  width: 52px;
+  height: 52px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.takotris-brand > span:last-child {
+  display: grid;
+  gap: 2px;
+}
+.takotris-brand strong {
+  font-size: 18px;
+  font-weight: 950;
+  letter-spacing: -.05em;
+}
+.takotris-brand small {
+  color: #b04a2f;
+  font: 800 7px/1 var(--mono);
+  letter-spacing: .16em;
+}
+.takotris-nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.takotris-nav-actions > button {
+  width: 44px;
+  height: 40px;
+  border: 1px solid var(--tt-line);
+  border-radius: 13px;
+  background: white;
+  color: var(--tt-ink);
+  font-size: 15px;
+  font-weight: 900;
+  box-shadow: 0 4px 12px rgba(71,39,23,.08);
+}
+.takotris-settings {
+  top: 74px;
+  border-color: rgba(54,31,23,.14);
+  background: rgba(255,250,239,.98);
+  color: var(--tt-ink);
+}
+.takotris-settings span { color: #bd4b2c; }
+.takotris-settings input { border-color: var(--tt-line); background: white; color: var(--tt-ink); }
+.takotris-settings a { background: var(--tt-ink); color: white; }
+
+.takotris-game {
+  width: min(1260px, calc(100% - 28px));
+  min-height: calc(100dvh - 66px);
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  align-content: center;
+  gap: 13px;
+  margin: 0 auto;
+  padding: 16px 0 max(18px, env(safe-area-inset-bottom));
+}
+.takotris-scorebar {
+  min-height: 62px;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 8px 10px 8px 18px;
+  border: 1px solid rgba(255,255,255,.1);
+  border-radius: 20px;
+  background: var(--tt-ink);
+  color: white;
+  box-shadow: 0 12px 30px rgba(64,29,18,.18);
+}
+.takotris-live {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.takotris-live i,
+.takotris-board-top i {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #ff6049;
+  box-shadow: 0 0 0 5px rgba(255,96,73,.15);
+  animation: takotris-pulse 1.8s ease-in-out infinite;
+}
+.takotris-live span { font: 900 11px/1 var(--mono); letter-spacing: .12em; }
+.takotris-live b {
+  margin-left: 5px;
+  padding: 6px 9px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.09);
+  color: rgba(255,255,255,.64);
+  font: 750 8px/1 var(--mono);
+  letter-spacing: .08em;
+}
+.takotris-scorebar dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(82px, 1fr));
+  gap: 5px;
+  margin: 0;
+}
+.takotris-scorebar dl > div {
+  min-width: 0;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  padding: 3px 12px;
+  border-radius: 13px;
+  background: rgba(255,255,255,.07);
+}
+.takotris-scorebar dt {
+  color: #ffc875;
+  font: 800 7px/1 var(--mono);
+  letter-spacing: .12em;
+}
+.takotris-scorebar dd {
+  margin: 0;
+  font: 850 17px/1 var(--mono);
+  letter-spacing: .04em;
+}
+.takotris-play-area {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 150px minmax(460px, 1fr) 178px;
+  align-items: center;
+  gap: 14px;
+}
+.takotris-piece-panel {
+  display: grid;
+  align-content: center;
+  gap: 12px;
+}
+.takotris-piece-card {
+  min-height: 132px;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  place-items: center;
+  gap: 6px;
+  padding: 12px;
+  border: 1px solid var(--tt-line);
+  border-radius: 22px;
+  background: rgba(255,255,255,.82);
+  color: var(--tt-ink);
+  box-shadow: 0 12px 30px rgba(100,48,20,.1);
+  backdrop-filter: blur(8px);
+}
+button.takotris-piece-card { width: 100%; font: inherit; cursor: pointer; touch-action: manipulation; }
+.takotris-piece-card > span {
+  color: #b54a2f;
+  font: 900 10px/1 var(--mono);
+  letter-spacing: .14em;
+}
+.takotris-piece-card > small {
+  color: rgba(36,21,18,.4);
+  font-size: 9px;
+  font-weight: 800;
+}
+.takotris-piece-card .arcade-piece-preview {
+  width: 100px;
+  height: 62px;
+  border: 0;
+  border-radius: 14px;
+  background: #2d1c19;
+}
+.takotris-piece-card .arcade-piece-preview > span { border-radius: 4px; }
+.takotris-piece-card.hold:active { transform: scale(.97); }
+.takotris-board-card {
+  min-width: 0;
+  display: grid;
+  align-content: center;
+  gap: 7px;
+}
+.takotris-board-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 7px;
+  color: #8b462f;
+  font: 800 8px/1 var(--mono);
+  letter-spacing: .12em;
+}
+.takotris-board-top > span { display: flex; align-items: center; gap: 9px; }
+.takotris-board-top > b {
+  padding: 5px 8px;
+  border-radius: 999px;
+  background: #ffead1;
+  color: #b5462d;
+}
+.takotris-bezel {
+  width: min(100%, calc((100dvh - 286px) * 1.25));
+  justify-self: center;
+  padding: 11px;
+  border: 1px solid rgba(122,42,25,.2);
+  border-radius: 30px;
+  background: linear-gradient(145deg, #ff7e39, #ee4436);
+  box-shadow: 0 16px 42px rgba(175,57,29,.26), inset 0 1px 0 rgba(255,255,255,.48);
+}
+.takotris-bezel .tetris-board {
+  width: 100%;
+  max-width: none;
+  border: 7px solid #321c18;
+  border-radius: 21px;
+  background: #0c111d;
+  box-shadow: inset 0 0 0 2px rgba(255,255,255,.06), inset 0 0 45px #000;
+}
+.takotris-bezel .tetris-scanlines {
+  background: linear-gradient(180deg, rgba(8,8,12,.02), rgba(8,8,12,.18));
+}
+.takotris-bezel .player-tetris-grid {
+  inset: 5%;
+  gap: 4%;
+}
+.takotris-bezel .player-tetris-grid .tetris-cell {
+  border: 2px solid rgba(255,190,106,.2);
+  background: rgba(255,173,79,.035) !important;
+  box-shadow: inset 0 0 18px rgba(0,0,0,.45) !important;
+}
+.takotris-overlay {
+  border-radius: 14px;
+  background: rgba(20,13,16,.66);
+  backdrop-filter: blur(4px);
+}
+.takotris-overlay small {
+  color: #ffc879;
+  font: 900 12px/1 var(--mono);
+  letter-spacing: .14em;
+}
+.takotris-overlay strong {
+  min-width: 160px;
+  padding: 15px 24px;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #ff7133, #ea3c36);
+  color: white;
+  box-shadow: 0 10px 25px rgba(232,58,44,.35);
+  font-size: 24px;
+  font-weight: 950;
+}
+.takotris-side-card {
+  display: grid;
+  align-content: center;
+  gap: 13px;
+  padding: 14px;
+  border: 1px solid var(--tt-line);
+  border-radius: 24px;
+  background: rgba(255,255,255,.82);
+  box-shadow: 0 12px 30px rgba(100,48,20,.1);
+}
+.takotris-mascot {
+  aspect-ratio: 1;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 18px;
+  background: linear-gradient(145deg, #fff0b0, #ffd35a);
+}
+.takotris-mascot img {
+  width: 112%;
+  height: 112%;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+.takotris-side-card p {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  text-align: center;
+}
+.takotris-side-card p span { color: #9d614b; font-size: 9px; font-weight: 800; }
+.takotris-side-card p strong { font-size: 18px; font-weight: 950; }
+.takotris-side-card > button {
+  min-height: 44px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--tt-ink);
+  color: white;
+  font-size: 10px;
+  font-weight: 850;
+}
+.takotris-side-card > button span { margin-right: 5px; font-size: 17px; }
+.takotris-controller {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 9px;
+}
+.takotris-controller > button {
+  min-height: 72px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 3px;
+  border: 1px solid rgba(82,38,23,.16);
+  border-radius: 20px;
+  background: rgba(255,255,255,.9);
+  color: var(--tt-ink);
+  box-shadow: 0 6px 0 rgba(118,59,30,.14), 0 10px 24px rgba(97,49,25,.07);
+  touch-action: manipulation;
+}
+.takotris-controller > button:active {
+  transform: translateY(5px);
+  box-shadow: 0 1px 0 rgba(118,59,30,.14);
+}
+.takotris-controller > button span { font: 950 27px/1 var(--mono); }
+.takotris-controller > button small { color: #9c6653; font: 800 7px/1 var(--mono); letter-spacing: .1em; }
+.takotris-controller > button.rotate {
+  border-color: rgba(237,68,52,.28);
+  background: #fff0e5;
+  color: var(--tt-red);
+}
+.takotris-controller > button.drop {
+  border-color: transparent;
+  background: linear-gradient(145deg, #ff7735, #ed4236);
+  color: white;
+}
+.takotris-controller > button.drop small,
+.takotris-controller > button.pause small { color: rgba(255,255,255,.72); }
+.takotris-controller > button.pause {
+  border-color: transparent;
+  background: var(--tt-ink);
+  color: white;
+}
+@keyframes takotris-pulse {
+  0%, 100% { transform: scale(.8); opacity: .65; }
+  50% { transform: scale(1); opacity: 1; }
+}
+@media (max-width: 980px) {
+  .takotris-play-area { grid-template-columns: 124px minmax(400px, 1fr) 144px; gap: 10px; }
+  .takotris-piece-card { min-height: 112px; padding: 9px; }
+  .takotris-side-card { padding: 10px; }
+  .takotris-controller > button { min-height: 64px; }
+}
+@media (max-width: 760px), (orientation: portrait) {
+  .takotris-nav { height: 62px; padding-inline: 14px; }
+  .takotris-brand strong { font-size: 16px; }
+  .takotris-logo { width: 40px; height: 40px; }
+  .takotris-game { width: min(94%, 720px); min-height: auto; padding-top: 12px; }
+  .takotris-scorebar { display: grid; padding: 10px; }
+  .takotris-live { display: none; }
+  .takotris-scorebar dl { grid-template-columns: repeat(4, 1fr); }
+  .takotris-scorebar dl > div { padding: 7px; }
+  .takotris-scorebar dd { font-size: 13px; }
+  .takotris-play-area { grid-template-columns: 1fr; }
+  .takotris-piece-panel { grid-template-columns: 1fr 1fr; order: 2; }
+  .takotris-piece-card { min-height: 92px; grid-template-columns: auto 1fr auto; grid-template-rows: 1fr; }
+  .takotris-side-card { display: none; }
+  .takotris-bezel { width: 100%; }
+  .takotris-controller { grid-template-columns: repeat(3, 1fr); }
+  .takotris-controller > button { min-height: 66px; }
+}
+.takotris-nav-center {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #9a563d;
+  font: 800 8px/1 var(--mono);
+  letter-spacing: .1em;
+}
+.takotris-nav-center span,
+.takotris-nav-center b {
+  padding: 7px 10px;
+  border: 1px solid var(--tt-line);
+  border-radius: 999px;
+  background: rgba(255,255,255,.65);
+}
+.takotris-nav-center b { color: #bd6d27; }
+.takotris-nav-center b.is-live { border-color: #e73d35; background: #e73d35; color: white; }
+.takotris-live-unlock {
+  min-width: 86px !important;
+  height: 42px !important;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 2px;
+  border-color: transparent !important;
+  background: #e73d35 !important;
+  color: white !important;
+  touch-action: none;
+  user-select: none;
+}
+.takotris-live-unlock strong { font: 850 9px/1 var(--mono); }
+.takotris-live-unlock small { font: 700 7px/1 var(--mono); opacity: .7; }
+.tetris-settings-open .takotris-piece-panel,
+.tetris-settings-open .takotris-side-card,
+.tetris-settings-open .takotris-controller,
+.tetris-settings-open .takotris-overlay,
+.tetris-settings-open .player-tetris-grid,
+.tetris-settings-open .tetris-scanlines {
+  pointer-events: none !important;
+}
+.tetris-settings-open .takotris-overlay { opacity: 0 !important; }
+.tetris-settings-open .tetris-video { pointer-events: auto !important; touch-action: auto !important; }
+@media (max-width: 760px), (orientation: portrait) {
+  .takotris-nav-center { display: none; }
+  .takotris-live-unlock { min-width: 72px !important; }
+  .takotris-live-unlock small { display: none; }
+}

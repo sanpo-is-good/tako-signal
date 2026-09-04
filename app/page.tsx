@@ -50,7 +50,7 @@ export default function Home() {
 
           <Link className="role-card tetris-card" href="/tetris">
             <span className="role-number">03</span>
-            <div><p className="role-kicker">ALTERNATIVE GAME</p><h3>VIDEO TETRIS</h3><p>VDO.Ninja映像越しに、鉄板の丸い穴へ投影されたブロックを積み上げます。</p></div>
+            <div><p className="role-kicker">ALTERNATIVE GAME</p><h3>たこ焼きテトリス</h3><p>VDO.Ninja映像越しに、鉄板の丸い穴へ投影されたブロックを積み上げます。</p></div>
             <span className="card-arrow" aria-hidden="true">↗</span>
           </Link>
         </div>

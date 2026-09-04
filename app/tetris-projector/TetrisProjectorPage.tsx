@@ -60,7 +60,7 @@ export default function TetrisProjectorPage() {
   return (
     <main className={"tetris-projector-shell " + (fullscreen ? "is-fullscreen" : "")}>
       <header className="tetris-projector-controls">
-        <Link href="/tetris" className="wordmark"><span className="wordmark-dot" />VIDEO TETRIS</Link>
+        <Link href="/tetris" className="wordmark"><span className="wordmark-dot" />たこ焼きテトリス</Link>
         <label><span>ROOM</span><input value={room} onChange={event => changeRoom(event.target.value)} /></label>
         <ConnectionPill connection={connection} />
         <Link href="/tetris-adjust">位置調整</Link>
