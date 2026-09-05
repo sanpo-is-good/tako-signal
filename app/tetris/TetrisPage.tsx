@@ -215,7 +215,15 @@ export default function TetrisPage() {
     }));
   }, [game.lines, game.score, game.status, projectionCells, room, send]);
 
+  const enterFullscreen = async () => {
+    if (document.fullscreenElement) return;
+    try {
+      await document.documentElement.requestFullscreen();
+    } catch { /* Fullscreen requires a supported user gesture. */ }
+  };
+
   const tap = (action: (state: GameState) => GameState) => {
+    void enterFullscreen();
     navigator.vibrate?.(8);
     setGame(action);
   };
@@ -227,6 +235,7 @@ export default function TetrisPage() {
   };
 
   const toggleGame = () => {
+    void enterFullscreen();
     if (game.status === "gameover") { restartGame(); return; }
     setGame(state => {
       if (state.status === "ready") return { ...state, status: "running" };
@@ -278,9 +287,9 @@ export default function TetrisPage() {
     <main className={`tk-tetris ${settingsOpen ? "tetris-settings-open" : ""}`}>
       <header className="tk-tetris-top">
         {settingsLocked ? (
-          <span className="tk-tetris-title"><strong>TAKOYAKI TETRIS</strong><small>5 × 8 · 40 CELLS</small></span>
+          <span className="tk-tetris-title"><strong>TAKOYAKI TETRIS</strong><small>4 × 5 · 20 CELLS</small></span>
         ) : (
-          <Link href="/" className="tk-tetris-title"><strong>TAKOYAKI TETRIS</strong><small>5 × 8 · 40 CELLS</small></Link>
+          <Link href="/" className="tk-tetris-title"><strong>TAKOYAKI TETRIS</strong><small>4 × 5 · 20 CELLS</small></Link>
         )}
         <div className="tk-tetris-top-actions">
           <span className="tk-tetris-room">ROOM {room.toUpperCase()}</span>
@@ -297,6 +306,7 @@ export default function TetrisPage() {
           ) : (
             <button className="tk-tetris-settings-button" onClick={() => setSettingsOpen(value => !value)} aria-label="設定">•••</button>
           )}
+          <button className="tk-tetris-settings-button" onClick={() => void enterFullscreen()} aria-label="全画面表示">⛶</button>
           <Link className="tk-tetris-exit" href="/">ゲームをやめる</Link>
         </div>
       </header>
@@ -304,9 +314,9 @@ export default function TetrisPage() {
       {settingsOpen && !settingsLocked && <section className="tetris-settings tk-tetris-settings">
         <label><span>ROOM</span><input value={room} onChange={event => { const value = sanitizeRoom(event.target.value); setRoom(value); localStorage.setItem("tako-room", value); }} /></label>
         <label><span>STREAM</span><input value={streamId} onChange={event => { setStreamId(event.target.value); localStorage.setItem("tako-stream", event.target.value); }} /></label>
-        <div><Link href={"/tetris-projector?room=" + encodeURIComponent(room)}>2面投影</Link><Link href="/tetris-adjust">2面位置調整</Link></div>
+        <div><Link href={"/tetris-projector?room=" + encodeURIComponent(room)}>投映画面</Link><Link href="/tetris-adjust">位置調整</Link></div>
         <div className="show-settings-footer">
-          <p>鉄板A・Bを別々に調整できます。本番モードでは設定を封印します。</p>
+          <p>1枚の4×5鉄板に合わせて調整できます。本番モードでは設定を封印します。</p>
           <button className="show-live-lock-button" onClick={enableLiveLock}>🔒 本番モードを開始</button>
         </div>
       </section>}
@@ -326,7 +336,7 @@ export default function TetrisPage() {
           </aside>
 
           <section className="tk-tetris-field">
-            <div className="tk-field-label"><span>PLAY FIELD</span><b><i /> LIVE · 2 PLATES</b></div>
+            <div className="tk-field-label"><span>PLAY FIELD</span><b><i /> LIVE · 1 PLATE</b></div>
             <div className="tetris-board player-video-board" aria-label="投影されたテトリスを確認するVDO.Ninja映像">
               {streamId.trim() ? <iframe className="tetris-video" src={videoUrl} title="VDO.Ninja game field" allow="autoplay; fullscreen; picture-in-picture" /> : <div className="tetris-video-placeholder">NO SIGNAL</div>}
               <div className="tetris-scanlines" />
@@ -352,7 +362,7 @@ export default function TetrisPage() {
               <strong>{game.status === "running" ? "ACTIVE" : game.status.toUpperCase()}</strong>
               <small>PROJECTION ONLINE</small>
             </div>
-            <button className="tk-new-game" onClick={restartGame}>↺ NEW GAME</button>
+            <button className="tk-new-game" onClick={() => { void enterFullscreen(); restartGame(); }}>↺ NEW GAME</button>
           </aside>
         </div>
 

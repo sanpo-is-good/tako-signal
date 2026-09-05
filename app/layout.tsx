@@ -18,7 +18,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const protocol = requestHeaders.get("x-forwarded-proto") || (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
   const title = "たこくり ゲーム — 現実とつながるたこ焼きゲーム";
-  const description = "iPadから職人へ光の指示を送り、実物の鉄板で遊ぶクッキングたこやきと5×8のたこやきテトリス。";
+  const description = "iPadから職人へ光の指示を送り、実物の4×5鉄板で遊ぶクッキングたこやきとたこやきテトリス。";
 
   return {
     title,

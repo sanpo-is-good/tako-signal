@@ -4061,7 +4061,7 @@ button.takotris-piece-card { width: 100%; font: inherit; cursor: pointer; touch-
 .tk-tetris-play {
   min-height:0;
   display:grid;
-  grid-template-columns:210px minmax(300px,390px) 210px;
+  grid-template-columns:210px minmax(320px,450px) 210px;
   justify-content:center;
   align-items:stretch;
   gap:20px;
@@ -4101,7 +4101,7 @@ button.tk-hold { width:100%; font:inherit; }
   min-height:0;
   max-width:100%;
   max-height:none;
-  aspect-ratio:5/8;
+  aspect-ratio:4/5;
   border:6px solid #23213a;
   border-radius:0;
   box-shadow:8px 8px 0 rgba(0,0,0,.5);
@@ -4248,7 +4248,7 @@ button.tk-hold { width:100%; font:inherit; }
   .tk-tetris-left { grid-template-columns:1fr 1fr; order:2; }
   .tk-tetris-right { grid-template-columns:1fr 1fr 1fr; order:3; }
   .tk-tetris-field { justify-self:center; width:min(70vw,420px); order:1; }
-  .tk-tetris-field .tetris-board { height:auto; min-height:0; aspect-ratio:5/8; }
+  .tk-tetris-field .tetris-board { height:auto; min-height:0; aspect-ratio:4/5; }
   .tk-tetris-controls { grid-template-columns:repeat(3,1fr); }
   .tk-adjust-layout { grid-template-columns:1fr; height:auto; }
   .tk-adjust-stage { min-height:62vh; }

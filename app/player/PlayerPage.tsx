@@ -75,6 +75,11 @@ export default function PlayerPage() {
     setTraceCues([]);
   };
 
+  const changeAction = (nextAction: ActionKind) => {
+    setAction(nextAction);
+    setSelectedHole(undefined);
+  };
+
   const applySettings = () => {
     const next = sanitizeRoom(roomInput);
     setRoom(next);
@@ -128,7 +133,7 @@ export default function PlayerPage() {
         </div>
       </section>
 
-      <PlayerControls mode={mode} action={action} onModeChange={changeMode} onActionChange={setAction} />
+      <PlayerControls mode={mode} action={action} onModeChange={changeMode} onActionChange={changeAction} />
     </main>
   );
 }
