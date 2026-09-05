@@ -10,9 +10,11 @@ import {
   ACTIONS,
   DEFAULT_ROOM,
   HOLE_OFFSETS_KEY,
+  TRACE_CUE_DURATION_MS,
   createMessage,
   parseHoleOffsets,
   sanitizeRoom,
+  supportsTrace,
   type ActionKind,
   type GameMode,
   type HoleOffsets,
@@ -29,6 +31,7 @@ export default function PlayerPage() {
   const [action, setAction] = useState<ActionKind>("batter");
   const [holeOffsets, setHoleOffsets] = useState<HoleOffsets>({});
   const [sentSignal, setSentSignal] = useState<SentSignal | null>(null);
+  const [traceCues, setTraceCues] = useState<SentSignal[]>([]);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
   useEffect(() => {
@@ -47,15 +50,20 @@ export default function PlayerPage() {
 
   useEffect(() => {
     if (!sentSignal) return;
-    const timer = window.setTimeout(() => setSentSignal(null), action === "batter" ? 3200 : 1200);
+    const timer = window.setTimeout(() => setSentSignal(null), supportsTrace(sentSignal.action) ? TRACE_CUE_DURATION_MS : 1200);
     return () => window.clearTimeout(timer);
-  }, [sentSignal, action]);
+  }, [sentSignal]);
 
   const { connection, send } = useSignalChannel(room, () => {});
 
   const sendOpinion = (hole: number) => {
     const message = createMessage("request", "player", room, { hole, action, gameMode: mode });
     send(message);
+    if (mode === "control" && supportsTrace(action)) {
+      const cue = { id: message.id, hole, action };
+      setTraceCues(cues => [...cues.filter(item => item.hole !== hole), cue]);
+      window.setTimeout(() => setTraceCues(cues => cues.filter(item => item.id !== message.id)), TRACE_CUE_DURATION_MS);
+    }
     setSelectedHole(hole);
     setSentSignal({ id: message.id, hole, action });
   };
@@ -64,6 +72,7 @@ export default function PlayerPage() {
     setMode(nextMode);
     setAction(nextMode === "control" ? "batter" : "mischiefSpin");
     setSelectedHole(undefined);
+    setTraceCues([]);
   };
 
   const applySettings = () => {
@@ -73,6 +82,8 @@ export default function PlayerPage() {
     localStorage.setItem("tako-stream", streamId);
     setSettingsOpen(false);
   };
+
+  const traceMode = !settingsOpen && mode === "control" && supportsTrace(action);
 
   return (
     <main className="tk-cooking">
@@ -101,12 +112,13 @@ export default function PlayerPage() {
           streamId={streamId}
           videoEnabled
           selectedHole={selectedHole}
-          activeHole={sentSignal?.hole}
+          activeHole={traceMode ? undefined : sentSignal?.hole}
+          activeCues={traceCues}
           activeAction={sentSignal?.action}
           cueId={sentSignal?.id}
           interactive={!settingsOpen}
           interactionDisabled={settingsOpen}
-          traceMode={!settingsOpen && action === "batter"}
+          traceMode={traceMode}
           onSelect={sendOpinion}
           holeOffsets={holeOffsets}
         />

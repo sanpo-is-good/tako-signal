@@ -69,6 +69,10 @@ export function resolveAssetPath(path: string): string {
   return typeof window !== "undefined" && window.location.pathname.startsWith("/tako-signal") ? "/tako-signal" + path : path;
 }
 export const CONTROL_ACTIONS: ActionKind[] = ["batter", "octopus", "greenOnion", "tenkasu", "add", "turn", "serve"];
+export const TRACE_ACTIONS: ActionKind[] = ["batter", "octopus", "greenOnion", "tenkasu", "add"];
+export const TRACE_CUE_DURATION_MS = 3200;
+export const supportsTrace = (action: ActionKind) => TRACE_ACTIONS.includes(action);
+
 export const MISCHIEF_ACTIONS: ActionKind[] = ["mischiefSpin", "mischiefTenkasu", "mischiefWait", "mischiefRush"];
 export const HOLE_OFFSETS_KEY = "takokuri-hole-offsets-4x5-v3";
 
