@@ -4051,6 +4051,12 @@ button.takotris-piece-card { width: 100%; font: inherit; cursor: pointer; touch-
   font:400 16px/1 "DotGothic16",sans-serif;
 }
 .tk-tetris-settings-button { width:44px; padding:0; }
+.tk-tetris-settings-button.video-adjust-button { width:auto; padding:0 12px; }
+.tk-video-adjust { grid-template-columns:repeat(3,minmax(130px,1fr)); align-items:end; }
+.tk-video-adjust > strong { grid-column:1/-1; color:var(--tt-yellow); font:700 11px/1 ui-monospace,monospace; letter-spacing:.12em; }
+.tk-video-adjust input[type="range"] { width:100%; padding:0; accent-color:var(--tt-cyan); }
+.tk-video-adjust > div { grid-template-columns:1fr 1fr; }
+.tk-video-adjust button { min-height:42px; border:2px solid var(--tt-line); background:var(--tt-bg); color:var(--tt-text); font-weight:800; }
 .tk-tetris-settings { top:72px; right:22px; background:rgba(21,20,46,.98); border:4px solid var(--tt-line); color:var(--tt-text); }
 .tk-tetris-settings input { background:var(--tt-bg); border-color:var(--tt-line); color:var(--tt-text); }
 .tk-tetris-body {

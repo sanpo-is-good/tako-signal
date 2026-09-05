@@ -8,6 +8,9 @@ import { DEFAULT_ROOM, createMessage, sanitizeRoom } from "../lib/takoyaki";
 import { TETRIS_COLS as COLS, TETRIS_ROWS as ROWS } from "../lib/tetris";
 
 const LIVE_LOCK_KEY = "tako-live-lock";
+const PLAYER_VIDEO_CALIBRATION_KEY = "takokuri-player-video-calibration-v1";
+type PlayerVideoCalibration = { x: number; y: number; scale: number };
+const DEFAULT_PLAYER_VIDEO_CALIBRATION: PlayerVideoCalibration = { x: 0, y: 0, scale: 1 };
 const KINDS = ["I", "O", "T", "S", "Z", "J", "L"] as const;
 type PieceKind = (typeof KINDS)[number];
 type Cell = PieceKind | null;
@@ -145,6 +148,8 @@ export default function TetrisPage() {
   const [room, setRoom] = useState(DEFAULT_ROOM);
   const [game, setGame] = useState<GameState>(() => newGame());
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [videoAdjustOpen, setVideoAdjustOpen] = useState(false);
+  const [videoCalibration, setVideoCalibration] = useState<PlayerVideoCalibration>(DEFAULT_PLAYER_VIDEO_CALIBRATION);
   const [settingsLocked, setSettingsLocked] = useState(false);
   const [holdKind, setHoldKind] = useState<PieceKind>();
   const [elapsed, setElapsed] = useState(0);
@@ -156,6 +161,11 @@ export default function TetrisPage() {
     setStreamId(params.get("stream") || localStorage.getItem("tako-stream") || "takokuri1");
     setRoom(sanitizeRoom(params.get("room") || localStorage.getItem("tako-room") || DEFAULT_ROOM));
     setSettingsLocked(localStorage.getItem(LIVE_LOCK_KEY) === "1");
+    try {
+      setVideoCalibration({ ...DEFAULT_PLAYER_VIDEO_CALIBRATION, ...JSON.parse(localStorage.getItem(PLAYER_VIDEO_CALIBRATION_KEY) || "{}") });
+    } catch {
+      setVideoCalibration(DEFAULT_PLAYER_VIDEO_CALIBRATION);
+    }
 
     const syncLock = (event: StorageEvent) => {
       if (event.key !== LIVE_LOCK_KEY) return;
@@ -182,7 +192,7 @@ export default function TetrisPage() {
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
-      if (settingsOpen) return;
+      if (settingsOpen || videoAdjustOpen) return;
       if (["ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp", " "].includes(event.key)) event.preventDefault();
       if (event.key === "ArrowLeft") setGame(state => moveSide(state, -1));
       if (event.key === "ArrowRight") setGame(state => moveSide(state, 1));
@@ -193,7 +203,7 @@ export default function TetrisPage() {
     };
     window.addEventListener("keydown", onKeyDown, { passive: false });
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [settingsOpen]);
+  }, [settingsOpen, videoAdjustOpen]);
 
   useEffect(() => () => {
     if (unlockTimer.current !== null) window.clearTimeout(unlockTimer.current);
@@ -279,12 +289,23 @@ export default function TetrisPage() {
     unlockTimer.current = null;
   };
 
+  const updateVideoCalibration = (key: keyof PlayerVideoCalibration, value: number) => {
+    const next = { ...videoCalibration, [key]: value };
+    setVideoCalibration(next);
+    localStorage.setItem(PLAYER_VIDEO_CALIBRATION_KEY, JSON.stringify(next));
+  };
+
+  const resetVideoCalibration = () => {
+    setVideoCalibration(DEFAULT_PLAYER_VIDEO_CALIBRATION);
+    localStorage.setItem(PLAYER_VIDEO_CALIBRATION_KEY, JSON.stringify(DEFAULT_PLAYER_VIDEO_CALIBRATION));
+  };
+
   const level = Math.min(99, Math.floor(game.lines / 4) + 1);
   const time = `${String(Math.floor(elapsed / 60)).padStart(2, "0")}’${String(elapsed % 60).padStart(2, "0")}`;
   const videoUrl = "https://vdo.ninja/?view=" + encodeURIComponent(streamId.trim()) + "&cleanoutput&noaudio";
 
   return (
-    <main className={`tk-tetris ${settingsOpen ? "tetris-settings-open" : ""}`}>
+    <main className={`tk-tetris ${settingsOpen || videoAdjustOpen ? "tetris-settings-open" : ""}`}>
       <header className="tk-tetris-top">
         {settingsLocked ? (
           <span className="tk-tetris-title"><strong>TAKOYAKI TETRIS</strong><small>4 × 5 · 20 CELLS</small></span>
@@ -306,10 +327,20 @@ export default function TetrisPage() {
           ) : (
             <button className="tk-tetris-settings-button" onClick={() => setSettingsOpen(value => !value)} aria-label="設定">•••</button>
           )}
+          <button className="tk-tetris-settings-button video-adjust-button" onClick={() => { setVideoAdjustOpen(value => !value); setSettingsOpen(false); }} aria-label="お客さん画面の映像位置を調整">映像調整</button>
           <button className="tk-tetris-settings-button" onClick={() => void enterFullscreen()} aria-label="全画面表示">⛶</button>
           <Link className="tk-tetris-exit" href="/">ゲームをやめる</Link>
         </div>
       </header>
+
+      {videoAdjustOpen && <section className="tetris-settings tk-tetris-settings tk-video-adjust">
+        <strong>お客さん画面の映像位置</strong>
+        <label><span>左右 <b>{videoCalibration.x}</b></span><input type="range" min="-200" max="200" step="1" value={videoCalibration.x} onChange={event => updateVideoCalibration("x", Number(event.target.value))} /></label>
+        <label><span>上下 <b>{videoCalibration.y}</b></span><input type="range" min="-200" max="200" step="1" value={videoCalibration.y} onChange={event => updateVideoCalibration("y", Number(event.target.value))} /></label>
+        <label><span>大きさ <b>{videoCalibration.scale.toFixed(2)}</b></span><input type="range" min="0.5" max="2" step="0.01" value={videoCalibration.scale} onChange={event => updateVideoCalibration("scale", Number(event.target.value))} /></label>
+        <div><button onClick={resetVideoCalibration}>リセット</button><button onClick={() => setVideoAdjustOpen(false)}>完了</button></div>
+      </section>}
+
 
       {settingsOpen && !settingsLocked && <section className="tetris-settings tk-tetris-settings">
         <label><span>ROOM</span><input value={room} onChange={event => { const value = sanitizeRoom(event.target.value); setRoom(value); localStorage.setItem("tako-room", value); }} /></label>
@@ -338,7 +369,7 @@ export default function TetrisPage() {
           <section className="tk-tetris-field">
             <div className="tk-field-label"><span>PLAY FIELD</span><b><i /> LIVE · 1 PLATE</b></div>
             <div className="tetris-board player-video-board" aria-label="投影されたテトリスを確認するVDO.Ninja映像">
-              {streamId.trim() ? <iframe className="tetris-video" src={videoUrl} title="VDO.Ninja game field" allow="autoplay; fullscreen; picture-in-picture" /> : <div className="tetris-video-placeholder">NO SIGNAL</div>}
+              {streamId.trim() ? <iframe className="tetris-video" style={{ transform: "translate(calc(-50% + " + videoCalibration.x + "px), calc(-50% + " + videoCalibration.y + "px)) rotate(90deg) scale(" + videoCalibration.scale + ")" }} src={videoUrl} title="VDO.Ninja game field" allow="autoplay; fullscreen; picture-in-picture" /> : <div className="tetris-video-placeholder">NO SIGNAL</div>}
               <div className="tetris-scanlines" />
               <div className="tetris-grid player-tetris-grid" style={{ gridTemplateColumns: `repeat(${COLS}, 1fr)`, gridTemplateRows: `repeat(${ROWS}, 1fr)` }} aria-hidden="true">
                 {Array.from({ length: ROWS * COLS }, (_, cellIndex) => <span key={cellIndex} className="tetris-cell" />)}
