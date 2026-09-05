@@ -316,7 +316,7 @@ a { color: inherit; text-decoration: none; }
 .signal-plate {
   position: relative;
   width: min(100%, 880px);
-  aspect-ratio: 1.35;
+  aspect-ratio: 5 / 4;
   margin: auto;
   transform-origin: center;
   transition: transform .15s ease;
@@ -3949,7 +3949,7 @@ button.takotris-piece-card { width: 100%; font: inherit; cursor: pointer; touch-
   border:6px solid var(--tk-line);
   background:repeating-linear-gradient(135deg,rgba(255,236,205,.06) 0 8px,transparent 8px 18px),var(--tk-deep);
 }
-.tk-cooking-stage .signal-plate { width:100%; height:100%; max-width:none; aspect-ratio:auto; }
+.tk-cooking-stage .signal-plate { width:auto; height:100%; max-width:100%; aspect-ratio:5/4; }
 .tk-cooking-stage .plate-surface { border:0; border-radius:0; box-shadow:none; }
 .tk-cooking-stage .plate-hole { width:min(11vh,10%); }
 .tk-cooking-stage .hole-number { background:rgba(18,4,9,.72); padding:5px 7px; }
@@ -4253,4 +4253,13 @@ button.tk-hold { width:100%; font:inherit; }
   .tk-adjust-layout { grid-template-columns:1fr; height:auto; }
   .tk-adjust-stage { min-height:62vh; }
   .tk-adjust-panel { border-left:0; border-top:1px solid #23213a; }
+}
+.tk-tetris-field .tetris-video {
+  inset:auto;
+  top:50%;
+  left:50%;
+  width:125%;
+  height:80%;
+  transform:translate(-50%,-50%) rotate(90deg);
+  transform-origin:center;
 }

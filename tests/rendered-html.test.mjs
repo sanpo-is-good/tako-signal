@@ -38,19 +38,21 @@ test("renders the 4 by 5 Tetris player", async () => {
 });
 
 test("keeps cooking and Tetris projection geometry explicit", async () => {
-  const [takoSource, tetrisSource, projectorSource] = await Promise.all([
+  const [takoSource, tetrisSource, projectorSource, styles] = await Promise.all([
     readFile(new URL("../app/lib/takoyaki.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/lib/tetris.ts", import.meta.url), "utf8"),
     readFile(new URL("../app/tetris-projector/TetrisProjectorPage.tsx", import.meta.url), "utf8"),
+    readFile(new URL("../app/globals.css", import.meta.url), "utf8"),
   ]);
 
   assert.match(takoSource, /HOLES:[\s\S]*id: 20/);
-  assert.match(takoSource, /x: 20, y: 10/);
-  assert.match(takoSource, /x: 80, y: 90/);
+  assert.match(takoSource, /x: 10, y: 20/);
+  assert.match(takoSource, /x: 90, y: 80/);
   assert.match(tetrisSource, /TETRIS_COLS = 4/);
   assert.match(tetrisSource, /TETRIS_ROWS = 5/);
   assert.match(tetrisSource, /TETRIS_PLATE_ROWS = TETRIS_ROWS/);
   assert.match(projectorSource, /<PlateOutput cells=/);
   assert.doesNotMatch(projectorSource, /plateB|PlateOutput id="B"/);
   assert.match(takoSource, /TRACE_ACTIONS:[\s\S]*"octopus"[\s\S]*"greenOnion"[\s\S]*"tenkasu"/);
+  assert.match(styles, /\.tk-tetris-field \.tetris-video[\s\S]*rotate\(90deg\)/);
 });

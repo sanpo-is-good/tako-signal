@@ -41,11 +41,10 @@ export interface HolePosition { id: number; x: number; y: number }
 export type HoleOffsets = Record<number, { x: number; y: number }>;
 
 export const HOLES: HolePosition[] = [
-  { id: 1, x: 20, y: 10 }, { id: 2, x: 40, y: 10 }, { id: 3, x: 60, y: 10 }, { id: 4, x: 80, y: 10 },
-  { id: 5, x: 20, y: 30 }, { id: 6, x: 40, y: 30 }, { id: 7, x: 60, y: 30 }, { id: 8, x: 80, y: 30 },
-  { id: 9, x: 20, y: 50 }, { id: 10, x: 40, y: 50 }, { id: 11, x: 60, y: 50 }, { id: 12, x: 80, y: 50 },
-  { id: 13, x: 20, y: 70 }, { id: 14, x: 40, y: 70 }, { id: 15, x: 60, y: 70 }, { id: 16, x: 80, y: 70 },
-  { id: 17, x: 20, y: 90 }, { id: 18, x: 40, y: 90 }, { id: 19, x: 60, y: 90 }, { id: 20, x: 80, y: 90 },
+  { id: 1, x: 10, y: 20 }, { id: 2, x: 30, y: 20 }, { id: 3, x: 50, y: 20 }, { id: 4, x: 70, y: 20 }, { id: 5, x: 90, y: 20 },
+  { id: 6, x: 10, y: 40 }, { id: 7, x: 30, y: 40 }, { id: 8, x: 50, y: 40 }, { id: 9, x: 70, y: 40 }, { id: 10, x: 90, y: 40 },
+  { id: 11, x: 10, y: 60 }, { id: 12, x: 30, y: 60 }, { id: 13, x: 50, y: 60 }, { id: 14, x: 70, y: 60 }, { id: 15, x: 90, y: 60 },
+  { id: 16, x: 10, y: 80 }, { id: 17, x: 30, y: 80 }, { id: 18, x: 50, y: 80 }, { id: 19, x: 70, y: 80 }, { id: 20, x: 90, y: 80 },
 ];
 
 export const ACTIONS: Record<ActionKind, { label: string; short: string; instruction: string; glyph: string; effect: CueEffect }> = {
@@ -74,7 +73,7 @@ export const TRACE_CUE_DURATION_MS = 3200;
 export const supportsTrace = (action: ActionKind) => TRACE_ACTIONS.includes(action);
 
 export const MISCHIEF_ACTIONS: ActionKind[] = ["mischiefSpin", "mischiefTenkasu", "mischiefWait", "mischiefRush"];
-export const HOLE_OFFSETS_KEY = "takokuri-hole-offsets-4x5-v3";
+export const HOLE_OFFSETS_KEY = "takokuri-hole-offsets-5x4-v4";
 
 export function parseHoleOffsets(value: string | null): HoleOffsets {
   if (!value) return {};

@@ -106,7 +106,7 @@ export default function PlayerPage() {
           <label>ROOM<input value={roomInput} onChange={event => setRoomInput(event.target.value)} /></label>
           <label>VDO.NINJA STREAM<input value={streamId} onChange={event => setStreamId(event.target.value)} /></label>
           <button onClick={applySettings}>反映する</button>
-          <Link href="/debug">4×5位置調整 ↗</Link>
+          <Link href="/debug">横5×縦4 位置調整 ↗</Link>
           <Link href={`/kitchen?room=${encodeURIComponent(room)}`}>投映画面 ↗</Link>
         </section>
       )}

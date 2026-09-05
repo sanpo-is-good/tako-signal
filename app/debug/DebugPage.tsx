@@ -66,7 +66,7 @@ export default function DebugPage() {
       <section className="debug-layout">
         <div className="debug-stage">
           <div className="debug-stage-title">
-            <div><p className="micro-label">LIVE ALIGNMENT / 4 × 5</p><h1>丸を実物の穴へ重ねる</h1></div>
+            <div><p className="micro-label">LIVE ALIGNMENT / 横5 × 縦4</p><h1>丸を実物の穴へ重ねる</h1></div>
             <p>番号を直接ドラッグできます。変更はこの端末に自動保存されます。</p>
           </div>
           <div className="debug-plate-wrap">
