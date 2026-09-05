@@ -21,20 +21,27 @@ export function PlayerControls({ mode, action, onModeChange, onActionChange }: P
   const actions = mode === "control" ? CONTROL_ACTIONS : MISCHIEF_ACTIONS;
 
   return (
-    <aside className={`customer-console icon-console mode-${mode}`}>
-      <div className="touch-mode-switch minimal-mode-switch" role="group" aria-label="遊び方">
-        <button className={mode === "control" ? "active" : ""} onClick={() => onModeChange("control")} aria-pressed={mode === "control"} aria-label="完全操縦">
-          <span>操</span>
+    <aside className={`tk-command-console mode-${mode}`}>
+      <div className="tk-mode-switch" role="group" aria-label="遊び方">
+        <button className={mode === "control" ? "active" : ""} onClick={() => onModeChange("control")} aria-pressed={mode === "control"}>
+          完全操縦
         </button>
-        <button className={mode === "mischief" ? "active" : ""} onClick={() => onModeChange("mischief")} aria-pressed={mode === "mischief"} aria-label="おまかせ">
-          <span>遊</span>
+        <button className={mode === "mischief" ? "active" : ""} onClick={() => onModeChange("mischief")} aria-pressed={mode === "mischief"}>
+          おまかせ
         </button>
       </div>
-
-      <div className={`icon-action-grid ${mode === "mischief" ? "icon-actions-four" : ""}`}>
+      <div className="tk-command-grid">
         {actions.map(kind => (
-          <button className={action === kind ? "active" : ""} key={kind} onClick={() => onActionChange(kind)} aria-label={ACTIONS[kind].label} aria-pressed={action === kind}>
+          <button
+            className={`tk-command ${action === kind ? "active" : ""} ${kind === "serve" ? "is-finish" : ""}`}
+            key={kind}
+            onPointerDown={event => { event.preventDefault(); onActionChange(kind); }}
+            aria-label={ACTIONS[kind].label}
+            aria-pressed={action === kind}
+          >
             <img src={resolveAssetPath(ACTION_ICONS[kind])} alt="" draggable={false} />
+            {kind === "add" && <b aria-hidden="true">＋</b>}
+            <span>{ACTIONS[kind].label.replace("を入れる", "").replace("くるっと", "").replace("焼き上げる", "完成")}</span>
           </button>
         ))}
       </div>

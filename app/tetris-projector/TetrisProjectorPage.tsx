@@ -10,38 +10,68 @@ import {
   type SignalMessage,
   type TetrisProjectionState,
 } from "../lib/takoyaki";
-import { DEFAULT_TETRIS_CALIBRATION, TETRIS_CALIBRATION_KEY, TETRIS_CELL_COUNT, TETRIS_COLS, TETRIS_ROWS, parseTetrisCalibration, type TetrisCalibration } from "../lib/tetris";
+import {
+  DEFAULT_TETRIS_CALIBRATION_A,
+  DEFAULT_TETRIS_CALIBRATION_B,
+  TETRIS_CALIBRATION_KEY_A,
+  TETRIS_CALIBRATION_KEY_B,
+  TETRIS_COLS,
+  TETRIS_PLATE_CELL_COUNT,
+  TETRIS_PLATE_ROWS,
+  parseTetrisCalibration,
+  type TetrisCalibration,
+} from "../lib/tetris";
 
 const EMPTY_PROJECTION: TetrisProjectionState = {
-  cells: Array(TETRIS_CELL_COUNT).fill(null),
+  cells: Array(TETRIS_PLATE_CELL_COUNT * 2).fill(null),
   score: 0,
   lines: 0,
   status: "ready",
 };
 
+function PlateOutput({ id, cells, calibration }: { id: "A" | "B"; cells: TetrisProjectionState["cells"]; calibration: TetrisCalibration }) {
+  return (
+    <div
+      className={`tk-projection-plate plate-${id.toLowerCase()}`}
+      style={{ transform: `translate(${calibration.x}px, ${calibration.y}px) rotate(${calibration.rotate}deg) scale(${calibration.scale})` }}
+      aria-label={`鉄板${id}`}
+    >
+      <div className="tk-projection-grid" style={{
+        gap: `${calibration.gapY}px ${calibration.gapX}px`,
+        gridTemplateColumns: `repeat(${TETRIS_COLS}, ${calibration.diameter}px)`,
+        gridTemplateRows: `repeat(${TETRIS_PLATE_ROWS}, ${calibration.diameter}px)`,
+      }}>
+        {cells.map((kind, index) => <span key={index} className={kind ? `projection-block block-${kind.toLowerCase()}` : ""} />)}
+      </div>
+    </div>
+  );
+}
+
 export default function TetrisProjectorPage() {
   const [room, setRoom] = useState(DEFAULT_ROOM);
   const [projection, setProjection] = useState<TetrisProjectionState>(EMPTY_PROJECTION);
   const [fullscreen, setFullscreen] = useState(false);
-  const [calibration, setCalibration] = useState<TetrisCalibration>(DEFAULT_TETRIS_CALIBRATION);
+  const [plateA, setPlateA] = useState<TetrisCalibration>(DEFAULT_TETRIS_CALIBRATION_A);
+  const [plateB, setPlateB] = useState<TetrisCalibration>(DEFAULT_TETRIS_CALIBRATION_B);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     setRoom(sanitizeRoom(params.get("room") || localStorage.getItem("tako-room") || DEFAULT_ROOM));
-    setCalibration(parseTetrisCalibration(localStorage.getItem(TETRIS_CALIBRATION_KEY)));
+    setPlateA(parseTetrisCalibration(localStorage.getItem(TETRIS_CALIBRATION_KEY_A), DEFAULT_TETRIS_CALIBRATION_A));
+    setPlateB(parseTetrisCalibration(localStorage.getItem(TETRIS_CALIBRATION_KEY_B), DEFAULT_TETRIS_CALIBRATION_B));
     const onFullscreen = () => setFullscreen(Boolean(document.fullscreenElement));
-    const onStorage = (event: StorageEvent) => { if (event.key === TETRIS_CALIBRATION_KEY) setCalibration(parseTetrisCalibration(event.newValue)); };
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === TETRIS_CALIBRATION_KEY_A) setPlateA(parseTetrisCalibration(event.newValue, DEFAULT_TETRIS_CALIBRATION_A));
+      if (event.key === TETRIS_CALIBRATION_KEY_B) setPlateB(parseTetrisCalibration(event.newValue, DEFAULT_TETRIS_CALIBRATION_B));
+    };
     document.addEventListener("fullscreenchange", onFullscreen);
     window.addEventListener("storage", onStorage);
     return () => { document.removeEventListener("fullscreenchange", onFullscreen); window.removeEventListener("storage", onStorage); };
   }, []);
 
   const onMessage = useCallback((message: SignalMessage) => {
-    if (message.role === "player" && message.kind === "tetris" && message.tetris) {
-      setProjection(message.tetris);
-    }
+    if (message.role === "player" && message.kind === "tetris" && message.tetris) setProjection(message.tetris);
   }, []);
-
   const { connection } = useSignalChannel(room, onMessage);
 
   const changeRoom = (value: string) => {
@@ -49,8 +79,6 @@ export default function TetrisProjectorPage() {
     setRoom(next);
     setProjection(EMPTY_PROJECTION);
     localStorage.setItem("tako-room", next);
-    const basePath = window.location.pathname.startsWith("/tako-signal/") ? "/tako-signal" : "";
-    history.replaceState(null, "", basePath + "/tetris-projector?room=" + encodeURIComponent(next));
   };
 
   const enterFullscreen = async () => {
@@ -58,22 +86,18 @@ export default function TetrisProjectorPage() {
   };
 
   return (
-    <main className={"tetris-projector-shell " + (fullscreen ? "is-fullscreen" : "")}>
-      <header className="tetris-projector-controls">
-        <Link href="/tetris" className="wordmark"><span className="wordmark-dot" />たこ焼きテトリス</Link>
+    <main className={`tk-projector ${fullscreen ? "is-fullscreen" : ""}`}>
+      <header className="tk-projector-bar">
+        <Link href="/tetris">TAKOYAKI TETRIS</Link>
         <label><span>ROOM</span><input value={room} onChange={event => changeRoom(event.target.value)} /></label>
         <ConnectionPill connection={connection} />
-        <Link href="/tetris-adjust">位置調整</Link>
-        <div><span>SCORE {String(projection.score).padStart(6, "0")}</span><span>LINES {String(projection.lines).padStart(2, "0")}</span></div>
-        <button onClick={enterFullscreen}>投影を全画面にする ↗</button>
+        <div><span>SCORE {String(projection.score).padStart(6, "0")}</span><span>LINES {String(projection.lines).padStart(3, "0")}</span></div>
+        <Link href="/tetris-adjust">2面位置調整</Link>
+        <button onClick={enterFullscreen}>全画面 ↗</button>
       </header>
-
-      <section className="tetris-projection-stage" aria-label="テトリスのプロジェクション出力">
-        <div className="tetris-projection-grid" style={{ transform: `translate(${calibration.x}px, ${calibration.y}px) scale(${calibration.scale})`, gap: `${calibration.gapY}px ${calibration.gapX}px`, gridTemplateColumns: `repeat(${TETRIS_COLS}, ${calibration.diameter}px)`, gridTemplateRows: `repeat(${TETRIS_ROWS}, ${calibration.diameter}px)` }}>
-          {projection.cells.map((kind, index) => (
-            <span key={index} className={kind ? "projection-block block-" + kind.toLowerCase() : ""} />
-          ))}
-        </div>
+      <section className="tk-projector-stage">
+        <PlateOutput id="A" cells={projection.cells.slice(0, TETRIS_PLATE_CELL_COUNT)} calibration={plateA} />
+        <PlateOutput id="B" cells={projection.cells.slice(TETRIS_PLATE_CELL_COUNT, TETRIS_PLATE_CELL_COUNT * 2)} calibration={plateB} />
       </section>
     </main>
   );

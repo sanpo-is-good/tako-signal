@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ConnectionPill } from "../components/ConnectionPill";
 import { useSignalChannel } from "../hooks/useSignalChannel";
-import { ACTION_ICONS, DEFAULT_ROOM, createMessage, resolveAssetPath, sanitizeRoom } from "../lib/takoyaki";
+import { DEFAULT_ROOM, createMessage, sanitizeRoom } from "../lib/takoyaki";
 import { TETRIS_COLS as COLS, TETRIS_ROWS as ROWS } from "../lib/tetris";
 
 const LIVE_LOCK_KEY = "tako-live-lock";
@@ -275,24 +275,15 @@ export default function TetrisPage() {
   const videoUrl = "https://vdo.ninja/?view=" + encodeURIComponent(streamId.trim()) + "&cleanoutput&noaudio";
 
   return (
-    <main className={`tetris-shell takotris-shell ${settingsOpen ? "tetris-settings-open" : ""}`}>
-      <header className="takotris-nav">
+    <main className={`tk-tetris ${settingsOpen ? "tetris-settings-open" : ""}`}>
+      <header className="tk-tetris-top">
         {settingsLocked ? (
-          <span className="takotris-brand">
-            <span className="takotris-logo"><img src={resolveAssetPath(ACTION_ICONS.octopus)} alt="" /></span>
-            <span><strong>たこ焼きテトリス</strong><small>TAKOYAKI TETRIS</small></span>
-          </span>
+          <span className="tk-tetris-title"><strong>TAKOYAKI TETRIS</strong><small>5 × 8 · 40 CELLS</small></span>
         ) : (
-          <Link href="/" className="takotris-brand">
-            <span className="takotris-logo"><img src={resolveAssetPath(ACTION_ICONS.octopus)} alt="" /></span>
-            <span><strong>たこ焼きテトリス</strong><small>TAKOYAKI TETRIS</small></span>
-          </Link>
+          <Link href="/" className="tk-tetris-title"><strong>TAKOYAKI TETRIS</strong><small>5 × 8 · 40 CELLS</small></Link>
         )}
-        <div className="takotris-nav-center">
-          <span>ROOM {room.toUpperCase()}</span>
-          <b className={settingsLocked ? "is-live" : ""}>{settingsLocked ? "LIVE" : "SETUP"}</b>
-        </div>
-        <div className="takotris-nav-actions">
+        <div className="tk-tetris-top-actions">
+          <span className="tk-tetris-room">ROOM {room.toUpperCase()}</span>
           <ConnectionPill connection={connection} />
           {settingsLocked ? (
             <button
@@ -304,78 +295,73 @@ export default function TetrisPage() {
               aria-label="2秒長押しで本番モードを解除"
             ><strong>LIVE 🔒</strong><small>2秒長押し</small></button>
           ) : (
-            <button onClick={() => setSettingsOpen(value => !value)} aria-label="設定">•••</button>
+            <button className="tk-tetris-settings-button" onClick={() => setSettingsOpen(value => !value)} aria-label="設定">•••</button>
           )}
+          <Link className="tk-tetris-exit" href="/">ゲームをやめる</Link>
         </div>
       </header>
 
-      {settingsOpen && !settingsLocked && <section className="tetris-settings takotris-settings">
+      {settingsOpen && !settingsLocked && <section className="tetris-settings tk-tetris-settings">
         <label><span>ROOM</span><input value={room} onChange={event => { const value = sanitizeRoom(event.target.value); setRoom(value); localStorage.setItem("tako-room", value); }} /></label>
         <label><span>STREAM</span><input value={streamId} onChange={event => { setStreamId(event.target.value); localStorage.setItem("tako-stream", event.target.value); }} /></label>
-        <div><Link href={"/tetris-projector?room=" + encodeURIComponent(room)}>投影</Link><Link href="/tetris-adjust">位置調整</Link><Link href="/tutorial">?</Link></div>
+        <div><Link href={"/tetris-projector?room=" + encodeURIComponent(room)}>2面投影</Link><Link href="/tetris-adjust">2面位置調整</Link></div>
         <div className="show-settings-footer">
-          <p>設定中は映像を直接タップできます。本番モードでは設定を封印します。</p>
+          <p>鉄板A・Bを別々に調整できます。本番モードでは設定を封印します。</p>
           <button className="show-live-lock-button" onClick={enableLiveLock}>🔒 本番モードを開始</button>
         </div>
       </section>}
 
-      <section className="takotris-game">
-        <div className="takotris-scorebar">
-          <div className="takotris-live"><i /><span>LIVE</span><b>20 HOLES</b></div>
-          <dl>
-            <div><dt>SCORE</dt><dd>{String(game.score).padStart(6, "0")}</dd></div>
-            <div><dt>LINES</dt><dd>{String(game.lines).padStart(2, "0")}</dd></div>
-            <div><dt>LEVEL</dt><dd>{String(level).padStart(2, "0")}</dd></div>
-            <div><dt>TIME</dt><dd>{time}</dd></div>
-          </dl>
-        </div>
-
-        <div className="takotris-play-area">
-          <aside className="takotris-piece-panel">
-            <button className="takotris-piece-card hold" onPointerDown={event => { event.preventDefault(); holdPiece(); }} aria-label="ホールド">
-              <span>HOLD</span><PiecePreview kind={holdKind} /><small>タップ</small>
+      <section className="tk-tetris-body">
+        <div className="tk-tetris-play">
+          <aside className="tk-tetris-left">
+            <button className="tk-tetris-panel tk-hold" onPointerDown={event => { event.preventDefault(); holdPiece(); }} aria-label="ホールド">
+              <span>HOLD</span><PiecePreview kind={holdKind} /><small>TAP TO HOLD</small>
             </button>
-            <div className="takotris-piece-card next">
-              <span>NEXT</span><PiecePreview kind={game.next} />
-            </div>
+            <dl className="tk-tetris-panel tk-tetris-stats">
+              <div><dt>SCORE</dt><dd>{String(game.score).padStart(6, "0")}</dd></div>
+              <div><dt>LINES</dt><dd>{String(game.lines).padStart(3, "0")}</dd></div>
+              <div><dt>LEVEL</dt><dd>{String(level).padStart(2, "0")}</dd></div>
+              <div><dt>TIME</dt><dd>{time}</dd></div>
+            </dl>
           </aside>
 
-          <section className="takotris-board-card">
-            <div className="takotris-board-top">
-              <span><i /> REMOTE TEPPAN</span>
-              <b>{game.status === "running" ? "PLAYING" : game.status.toUpperCase()}</b>
-            </div>
-            <div className="takotris-bezel">
-              <div className="tetris-board player-video-board" aria-label="投影されたテトリスを確認するVDO.Ninja映像">
-                {streamId.trim() ? <iframe className="tetris-video" src={videoUrl} title="VDO.Ninja game field" allow="autoplay; fullscreen; picture-in-picture" /> : <div className="tetris-video-placeholder">NO SIGNAL</div>}
-                <div className="tetris-scanlines" />
-                <div className="tetris-grid player-tetris-grid" style={{ gridTemplateColumns: `repeat(${COLS}, 1fr)`, gridTemplateRows: `repeat(${ROWS}, 1fr)` }} aria-hidden="true">
-                  {Array.from({ length: ROWS * COLS }, (_, index) => <span key={index} className="tetris-cell" />)}
-                </div>
-                {game.status !== "running" && (
-                  <button className="tetris-overlay takotris-overlay" onClick={toggleGame}>
-                    <small>{game.status === "gameover" ? "焼きすぎ！" : game.status === "paused" ? "ひと休み" : "READY?"}</small>
-                    <strong>{game.status === "gameover" ? "もう一度" : game.status === "paused" ? "つづける" : "はじめる"}</strong>
-                  </button>
-                )}
+          <section className="tk-tetris-field">
+            <div className="tk-field-label"><span>PLAY FIELD</span><b><i /> LIVE · 2 PLATES</b></div>
+            <div className="tetris-board player-video-board" aria-label="投影されたテトリスを確認するVDO.Ninja映像">
+              {streamId.trim() ? <iframe className="tetris-video" src={videoUrl} title="VDO.Ninja game field" allow="autoplay; fullscreen; picture-in-picture" /> : <div className="tetris-video-placeholder">NO SIGNAL</div>}
+              <div className="tetris-scanlines" />
+              <div className="tetris-grid player-tetris-grid" style={{ gridTemplateColumns: `repeat(${COLS}, 1fr)`, gridTemplateRows: `repeat(${ROWS}, 1fr)` }} aria-hidden="true">
+                {Array.from({ length: ROWS * COLS }, (_, cellIndex) => <span key={cellIndex} className="tetris-cell" />)}
               </div>
+              {game.status !== "running" && (
+                <button className="tetris-overlay tk-tetris-overlay" onClick={toggleGame}>
+                  <small>{game.status === "gameover" ? "GAME OVER" : game.status === "paused" ? "PAUSED" : "READY"}</small>
+                  <strong>{game.status === "gameover" ? "RETRY" : game.status === "paused" ? "CONTINUE" : "START"}</strong>
+                </button>
+              )}
             </div>
           </section>
 
-          <aside className="takotris-side-card">
-            <div className="takotris-mascot"><img src={resolveAssetPath(ACTION_ICONS.turn)} alt="" /></div>
-            <p><span>いまの焼き加減</span><strong>{level < 3 ? "ふわふわ" : level < 6 ? "こんがり" : "カリカリ"}</strong></p>
-            <button onClick={restartGame}><span>↺</span>リスタート</button>
+          <aside className="tk-tetris-right">
+            <div className="tk-tetris-panel tk-next">
+              <span>NEXT</span><PiecePreview kind={game.next} />
+              <div className="tk-next-fade"><i /><i /><i /><i /></div>
+            </div>
+            <div className="tk-tetris-panel tk-session">
+              <span>SESSION</span>
+              <strong>{game.status === "running" ? "ACTIVE" : game.status.toUpperCase()}</strong>
+              <small>PROJECTION ONLINE</small>
+            </div>
+            <button className="tk-new-game" onClick={restartGame}>↺ NEW GAME</button>
           </aside>
         </div>
 
-        <div className="takotris-controller">
+        <div className="tk-tetris-controls">
           <button aria-label="左" onPointerDown={event => { event.preventDefault(); tap(state => moveSide(state, -1)); }}><span>←</span><small>LEFT</small></button>
-          <button aria-label="下" onPointerDown={event => { event.preventDefault(); tap(stepDown); }}><span>↓</span><small>DOWN</small></button>
           <button aria-label="右" onPointerDown={event => { event.preventDefault(); tap(state => moveSide(state, 1)); }}><span>→</span><small>RIGHT</small></button>
-          <button className="rotate" aria-label="回転" onPointerDown={event => { event.preventDefault(); tap(rotatePiece); }}><span>↻</span><small>TURN</small></button>
-          <button className="drop" aria-label="一気に落とす" onPointerDown={event => { event.preventDefault(); tap(hardDrop); }}><span>⇊</span><small>DROP</small></button>
-          <button className="pause" onClick={toggleGame}><span>{game.status === "running" ? "Ⅱ" : "▶"}</span><small>{game.status === "running" ? "PAUSE" : "PLAY"}</small></button>
+          <button className="rotate" aria-label="回転" onPointerDown={event => { event.preventDefault(); tap(rotatePiece); }}><span>↻</span><small>ROTATE</small></button>
+          <button aria-label="下" onPointerDown={event => { event.preventDefault(); tap(stepDown); }}><span>↓</span><small>SOFT DROP</small></button>
+          <button className="drop" aria-label="一気に落とす" onPointerDown={event => { event.preventDefault(); tap(hardDrop); }}><span>↓↓</span><small>HARD DROP</small></button>
         </div>
       </section>
     </main>

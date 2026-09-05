@@ -17,8 +17,8 @@ export async function generateMetadata(): Promise<Metadata> {
   const host = requestHeaders.get("x-forwarded-host") || requestHeaders.get("host") || "localhost:3000";
   const protocol = requestHeaders.get("x-forwarded-proto") || (host.startsWith("localhost") ? "http" : "https");
   const origin = `${protocol}://${host}`;
-  const title = "TAKO SIGNAL — 光で職人を操作するたこ焼きゲーム";
-  const description = "遠隔のゲーム操作を、たこ焼き鉄板上の光の指示へ変換するWizard-of-Oz型メディアアートシステム。";
+  const title = "たこくり ゲーム — 現実とつながるたこ焼きゲーム";
+  const description = "iPadから職人へ光の指示を送り、実物の鉄板で遊ぶクッキングたこやきと5×8のたこやきテトリス。";
 
   return {
     title,
@@ -28,7 +28,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title,
       description,
       type: "website",
-      images: [{ url: `${origin}/og.png`, width: 1200, height: 630, alt: "TAKO SIGNAL — 光が指示し、人が焼く。" }],
+      images: [{ url: `${origin}/og.png`, width: 1200, height: 630, alt: "たこくり ゲーム" }],
     },
     twitter: {
       card: "summary_large_image",
