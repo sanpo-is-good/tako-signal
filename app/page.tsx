@@ -5,7 +5,6 @@ const asset = (name: string) => `takokuri/${name}.png`;
 export default function Home() {
   return (
     <main className="tk-home">
-      <div className="tk-home-meta"><span>TAKOKURI / LIVE COOKING INSTALLATION</span><span>iPad 横画面専用 · タッチ操作のみ</span></div>
       <section className="tk-home-main">
         <p>現実とつながる たこ焼きゲーム</p>
         <h1>たこくり ゲーム</h1>

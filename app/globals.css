@@ -3737,16 +3737,6 @@ button.takotris-piece-card { width: 100%; font: inherit; cursor: pointer; touch-
     var(--tk-bg);
   color: var(--tk-cream);
 }
-.tk-home-meta {
-  position: absolute;
-  z-index: 2;
-  inset: 24px 30px auto;
-  display: flex;
-  justify-content: space-between;
-  color: rgba(255,236,205,.45);
-  font: 700 10px/1 ui-monospace, Menlo, monospace;
-  letter-spacing: .2em;
-}
 .tk-home-main {
   min-height: calc(100dvh - 16px);
   display: grid;
@@ -4028,6 +4018,8 @@ button.takotris-piece-card { width: 100%; font: inherit; cursor: pointer; touch-
   --tt-pink:#ff7aa8;
   --tt-yellow:#ffe066;
   height:100dvh;
+  display:grid;
+  grid-template-rows:54px minmax(0,1fr);
   overflow:hidden;
   padding:18px 22px;
   box-sizing:border-box;
@@ -4059,7 +4051,7 @@ button.takotris-piece-card { width: 100%; font: inherit; cursor: pointer; touch-
 .tk-tetris-settings { top:72px; right:22px; background:rgba(21,20,46,.98); border:4px solid var(--tt-line); color:var(--tt-text); }
 .tk-tetris-settings input { background:var(--tt-bg); border-color:var(--tt-line); color:var(--tt-text); }
 .tk-tetris-body {
-  height:calc(100dvh - 96px);
+  min-height:0;
   display:grid;
   grid-template-rows:minmax(0,1fr) 126px;
   gap:14px;
@@ -4069,12 +4061,14 @@ button.takotris-piece-card { width: 100%; font: inherit; cursor: pointer; touch-
 .tk-tetris-play {
   min-height:0;
   display:grid;
-  grid-template-columns:210px minmax(300px,352px) 210px;
+  grid-template-columns:210px minmax(300px,390px) 210px;
   justify-content:center;
-  align-items:start;
+  align-items:stretch;
   gap:20px;
 }
-.tk-tetris-left,.tk-tetris-right { display:grid; gap:14px; }
+.tk-tetris-left,.tk-tetris-right { height:100%; display:grid; align-content:start; gap:14px; }
+.tk-tetris-left { grid-template-rows:auto minmax(0,1fr); }
+.tk-tetris-right { grid-template-rows:auto minmax(0,1fr) auto; }
 .tk-tetris-panel { border:4px solid #23213a; background:rgba(21,20,46,.72); }
 .tk-hold,.tk-next {
   min-height:145px;
@@ -4093,19 +4087,20 @@ button.tk-hold { width:100%; font:inherit; }
 }
 .tk-hold .arcade-piece-preview,.tk-next .arcade-piece-preview { width:155px; height:82px; border:3px solid #23213a; background:var(--tt-bg); }
 .tk-hold > small { color:#555882; font:700 8px/1 ui-monospace,monospace; letter-spacing:.16em; }
-.tk-tetris-stats { display:grid; gap:16px; padding:18px; margin:0; }
+.tk-tetris-stats { display:grid; align-content:center; gap:16px; padding:18px; margin:0; }
 .tk-tetris-stats div { display:grid; gap:7px; }
 .tk-tetris-stats dd { margin:0; color:var(--tt-text); font:400 17px/1.25 "Press Start 2P",ui-monospace,monospace; }
 .tk-tetris-stats div:first-child dd { color:var(--tt-yellow); font-size:19px; }
-.tk-tetris-field { position:relative; min-height:0; }
-.tk-field-label { height:21px; display:flex; justify-content:space-between; color:var(--tt-muted); font:700 9px/1 ui-monospace,monospace; letter-spacing:.2em; }
+.tk-tetris-field { position:relative; min-height:0; display:grid; grid-template-rows:21px minmax(0,1fr); justify-items:center; }
+.tk-field-label { width:100%; height:21px; display:flex; justify-content:space-between; color:var(--tt-muted); font:700 9px/1 ui-monospace,monospace; letter-spacing:.2em; }
 .tk-field-label b { display:flex; gap:7px; align-items:center; color:var(--tt-text); font-weight:700; }
 .tk-field-label i { width:8px; height:8px; background:#e11d3c; animation:tk-blink 1.2s steps(2,end) infinite; }
 .tk-tetris-field .tetris-board {
-  width:100%;
-  height:calc(100dvh - 250px);
-  min-height:410px;
-  max-height:556px;
+  width:auto;
+  height:100%;
+  min-height:0;
+  max-width:100%;
+  max-height:none;
   aspect-ratio:5/8;
   border:6px solid #23213a;
   border-radius:0;
@@ -4132,7 +4127,7 @@ button.tk-hold { width:100%; font:inherit; }
 .tk-next-fade { width:100%; display:grid; gap:8px; }
 .tk-next-fade i { height:34px; border:3px solid #23213a; background:var(--tt-bg); opacity:.65; }
 .tk-next-fade i:nth-child(2){opacity:.48}.tk-next-fade i:nth-child(3){opacity:.3}.tk-next-fade i:nth-child(4){opacity:.17}
-.tk-session { display:grid; gap:9px; padding:16px; }
+.tk-session { display:grid; align-content:center; gap:9px; padding:16px; }
 .tk-session strong { color:var(--tt-cyan); font:400 15px/1 "Press Start 2P",monospace; }
 .tk-session small { color:#555882; font:700 8px/1 ui-monospace,monospace; letter-spacing:.13em; }
 .tk-new-game { min-height:56px; border:4px solid var(--tt-line); background:transparent; color:var(--tt-text); font:700 10px/1 ui-monospace,monospace; letter-spacing:.16em; }
