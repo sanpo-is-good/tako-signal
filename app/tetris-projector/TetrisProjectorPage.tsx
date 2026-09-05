@@ -32,7 +32,7 @@ function PlateOutput({ cells, calibration }: { cells: TetrisProjectionState["cel
     <div
       className="tk-projection-plate plate-a"
       style={{ transform: `translate(${calibration.x}px, ${calibration.y}px) rotate(${calibration.rotate}deg) scale(${calibration.scale})` }}
-      aria-label="4×5鉄板"
+      aria-label="横5×縦4に90度回転した鉄板"
     >
       <div className="tk-projection-grid" style={{
         gap: `${calibration.gapY}px ${calibration.gapX}px`,

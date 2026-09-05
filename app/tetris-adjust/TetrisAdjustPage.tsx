@@ -16,7 +16,7 @@ const controls: Array<{ key: keyof TetrisCalibration; label: string; min: number
   { key: "x", label: "左右", min: -700, max: 700, step: 1 },
   { key: "y", label: "上下", min: -450, max: 450, step: 1 },
   { key: "scale", label: "全体サイズ", min: 0.25, max: 2, step: 0.01 },
-  { key: "rotate", label: "回転", min: -30, max: 30, step: 0.1 },
+  { key: "rotate", label: "回転", min: -180, max: 180, step: 0.1 },
   { key: "gapX", label: "横の間隔", min: 0, max: 120, step: 1 },
   { key: "gapY", label: "縦の間隔", min: 0, max: 120, step: 1 },
   { key: "diameter", label: "丸の大きさ", min: 20, max: 180, step: 1 },
@@ -25,7 +25,7 @@ const controls: Array<{ key: keyof TetrisCalibration; label: string; min: number
 function PlatePreview({ calibration }: { calibration: TetrisCalibration }) {
   return (
     <div className="tk-adjust-plate plate-a selected" style={{ transform: `translate(${calibration.x}px, ${calibration.y}px) rotate(${calibration.rotate}deg) scale(${calibration.scale})` }}>
-      <b>PLATE 4 × 5</b>
+      <b>PROJECTED AS 横5 × 縦4</b>
       <div style={{
         gap: `${calibration.gapY}px ${calibration.gapX}px`,
         gridTemplateColumns: `repeat(${TETRIS_COLS}, ${calibration.diameter}px)`,
@@ -60,7 +60,7 @@ export default function TetrisAdjustPage() {
     <main className="tk-adjust">
       <header className="tk-adjust-head">
         <Link href="/tetris">TAKOYAKI TETRIS</Link>
-        <b>PROJECTOR CALIBRATION · 4 × 5</b>
+        <b>PROJECTOR CALIBRATION · 横5 × 縦4</b>
         <Link href="/tetris-projector">投映画面 ↗</Link>
       </header>
       <section className="tk-adjust-layout">
@@ -68,7 +68,7 @@ export default function TetrisAdjustPage() {
           <PlatePreview calibration={plateA} />
         </div>
         <aside className="tk-adjust-panel">
-          <div><small>SINGLE PLATE · 20 CELLS</small><h1>丸を実物の穴へ合わせる</h1><p>1枚の4×5鉄板に位置を合わせます。</p></div>
+          <div><small>90° ROTATED · 20 CELLS</small><h1>横向きの鉄板へ合わせる</h1><p>縦5×横4のゲーム盤を90度回転し、横5×縦4で投影します。</p></div>
           {controls.map(control => (
             <label key={control.key}>
               <span>{control.label}<b>{Number(calibration[control.key]).toFixed(control.step < 1 ? 1 : 0)}</b></span>

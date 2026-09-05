@@ -14,9 +14,9 @@ export interface TetrisCalibration {
   diameter: number;
 }
 
-export const TETRIS_CALIBRATION_KEY_A = "takokuri-tetris-plate-a-v3";
+export const TETRIS_CALIBRATION_KEY_A = "takokuri-tetris-plate-a-v4";
 export const DEFAULT_TETRIS_CALIBRATION: TetrisCalibration = {
-  x: 0, y: 0, scale: 1, rotate: 0, gapX: 14, gapY: 14, diameter: 74,
+  x: 0, y: 0, scale: 1, rotate: 90, gapX: 14, gapY: 14, diameter: 74,
 };
 export const DEFAULT_TETRIS_CALIBRATION_A: TetrisCalibration = {
   ...DEFAULT_TETRIS_CALIBRATION,

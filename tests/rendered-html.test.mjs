@@ -51,6 +51,7 @@ test("keeps cooking and Tetris projection geometry explicit", async () => {
   assert.match(tetrisSource, /TETRIS_COLS = 4/);
   assert.match(tetrisSource, /TETRIS_ROWS = 5/);
   assert.match(tetrisSource, /TETRIS_PLATE_ROWS = TETRIS_ROWS/);
+  assert.match(tetrisSource, /rotate: 90/);
   assert.match(projectorSource, /<PlateOutput cells=/);
   assert.doesNotMatch(projectorSource, /plateB|PlateOutput id="B"/);
   assert.match(takoSource, /TRACE_ACTIONS:[\s\S]*"octopus"[\s\S]*"greenOnion"[\s\S]*"tenkasu"/);
