@@ -54,7 +54,7 @@ export default function PlayerPage() {
     return () => window.clearTimeout(timer);
   }, [sentSignal]);
 
-  const { connection, send } = useSignalChannel(room, () => {});
+  const { connection, send, reconnect } = useSignalChannel(room, () => {});
 
   const sendOpinion = (hole: number) => {
     const message = createMessage("request", "player", room, { hole, action, gameMode: mode });
@@ -94,7 +94,7 @@ export default function PlayerPage() {
     <main className="tk-cooking">
       <header className="tk-gamebar">
         <div className="tk-life"><span>ライフ</span><b aria-label="ライフ10">♥♥♥♥♥♥♥♥♥♥</b><small>10 / 10</small></div>
-        <div className="tk-connection"><ConnectionPill connection={connection} /><span>職人へ即時送信</span></div>
+        <div className="tk-connection"><ConnectionPill connection={connection} onReconnect={reconnect} /><span>職人へ即時送信</span></div>
         <div className="tk-gamebar-actions">
           <button onClick={() => setSettingsOpen(value => !value)} aria-label="接続設定">•••</button>
           <Link href="/">ゲームをやめる</Link>

@@ -67,7 +67,7 @@ export default function TetrisProjectorPage() {
   const onMessage = useCallback((message: SignalMessage) => {
     if (message.role === "player" && message.kind === "tetris" && message.tetris) setProjection(message.tetris);
   }, []);
-  const { connection } = useSignalChannel(room, onMessage);
+  const { connection, reconnect } = useSignalChannel(room, onMessage);
 
   const changeRoom = (value: string) => {
     const next = sanitizeRoom(value);
@@ -85,7 +85,7 @@ export default function TetrisProjectorPage() {
       <header className="tk-projector-bar">
         <Link href="/tetris">TAKOYAKI TETRIS</Link>
         <label><span>ROOM</span><input value={room} onChange={event => changeRoom(event.target.value)} /></label>
-        <ConnectionPill connection={connection} />
+        <ConnectionPill connection={connection} onReconnect={reconnect} />
         <div><span>SCORE {String(projection.score).padStart(6, "0")}</span><span>LINES {String(projection.lines).padStart(3, "0")}</span></div>
         <Link href="/tetris-adjust">位置調整</Link>
         <button onClick={enterFullscreen}>全画面 ↗</button>

@@ -64,7 +64,7 @@ export default function KitchenPage() {
     }
   }, []);
 
-  const { connection } = useSignalChannel(room, onMessage);
+  const { connection, reconnect } = useSignalChannel(room, onMessage);
 
   useEffect(() => {
     if (!current) return;
@@ -119,7 +119,7 @@ export default function KitchenPage() {
         <Link href="/" className="wordmark"><span className="wordmark-dot" />TAKO SIGNAL</Link>
         <div className="header-center"><span>AUTO PROJECTOR</span><b>/</b><span>ROOM {room.toUpperCase()}</span></div>
         <div className="header-actions">
-          <ConnectionPill connection={connection} />
+          <ConnectionPill connection={connection} onReconnect={reconnect} />
           <button className="icon-button" onClick={() => setSettingsOpen(value => !value)} aria-label="設定を開く">⚙</button>
         </div>
       </header>

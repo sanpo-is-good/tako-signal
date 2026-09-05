@@ -149,7 +149,7 @@ export default function TetrisPage() {
   const [holdKind, setHoldKind] = useState<PieceKind>();
   const [elapsed, setElapsed] = useState(0);
   const unlockTimer = useRef<number | null>(null);
-  const { connection, send } = useSignalChannel(room, () => {});
+  const { connection, send, reconnect } = useSignalChannel(room, () => {});
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -293,7 +293,7 @@ export default function TetrisPage() {
         )}
         <div className="tk-tetris-top-actions">
           <span className="tk-tetris-room">ROOM {room.toUpperCase()}</span>
-          <ConnectionPill connection={connection} />
+          <ConnectionPill connection={connection} onReconnect={reconnect} />
           {settingsLocked ? (
             <button
               className="takotris-live-unlock"

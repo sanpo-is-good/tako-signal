@@ -7,6 +7,7 @@ type ConnectionState = "connecting" | "online" | "local";
 
 export function useSignalChannel(room: string, onMessage: (message: SignalMessage) => void) {
   const [connection, setConnection] = useState<ConnectionState>("connecting");
+  const [connectionAttempt, setConnectionAttempt] = useState(0);
   const channelRef = useRef<BroadcastChannel | null>(null);
   const socketRef = useRef<WebSocket | null>(null);
   const callbackRef = useRef(onMessage);
@@ -14,12 +15,14 @@ export function useSignalChannel(room: string, onMessage: (message: SignalMessag
   const pendingRef = useRef<SignalMessage[]>([]);
   const dataFrameRef = useRef<HTMLIFrameElement | null>(null);
   const latestRef = useRef<SignalMessage | null>(null);
+  const peerIdRef = useRef(`tako-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`);
 
   useEffect(() => { callbackRef.current = onMessage; }, [onMessage]);
 
   useEffect(() => {
     let disposed = false;
     let reconnectTimer: ReturnType<typeof setTimeout> | undefined;
+    let presenceTimer: ReturnType<typeof setInterval> | undefined;
     pendingRef.current = [];
     const channel = new BroadcastChannel(`tako-signal-${room}`);
     channelRef.current = channel;
@@ -42,19 +45,33 @@ export function useSignalChannel(room: string, onMessage: (message: SignalMessag
     document.body.appendChild(dataFrame);
     dataFrameRef.current = dataFrame;
 
+    const postVdoData = (data: Record<string, unknown>) => {
+      dataFrame.contentWindow?.postMessage({ sendData: data }, "https://vdo.ninja");
+    };
     const sendViaVdo = (message: SignalMessage) => {
-      dataFrame.contentWindow?.postMessage({ sendData: { takoSignal: message }, type: "pcs" }, "https://vdo.ninja");
+      postVdoData({ takoSignal: message });
+    };
+    const sendPresence = (type: "ping" | "pong") => {
+      postVdoData({ takoSignalPresence: { type, peerId: peerIdRef.current, room } });
     };
     const onVdoMessage = (event: MessageEvent) => {
       if (event.origin !== "https://vdo.ninja" || event.source !== dataFrame.contentWindow) return;
       const payload = event.data?.dataReceived?.takoSignal as SignalMessage | undefined;
       if (payload) { setConnection("online"); deliver(payload); }
+      const presence = event.data?.dataReceived?.takoSignalPresence as { type?: string; peerId?: string; room?: string } | undefined;
+      if (presence?.room === room && presence.peerId && presence.peerId !== peerIdRef.current) {
+        setConnection("online");
+        if (presence.type === "ping") sendPresence("pong");
+      }
       if (event.data?.action === "guest-connected") {
         setConnection("online");
+        sendPresence("ping");
         if (latestRef.current?.room === room) sendViaVdo(latestRef.current);
       }
     };
     window.addEventListener("message", onVdoMessage);
+    dataFrame.addEventListener("load", () => sendPresence("ping"));
+    presenceTimer = setInterval(() => sendPresence("ping"), 3000);
 
     const connect = () => {
       if (disposed) return;
@@ -75,10 +92,11 @@ export function useSignalChannel(room: string, onMessage: (message: SignalMessag
 
     const supportsWebSocketRelay = window.location.hostname === "localhost" || window.location.hostname.endsWith(".chatgpt.site");
     if (supportsWebSocketRelay) connect();
-    const localFallback = setTimeout(() => setConnection(current => current === "connecting" ? "local" : current), 1800);
+    const localFallback = setTimeout(() => setConnection(current => current === "connecting" ? "local" : current), 8000);
     return () => {
       disposed = true;
       clearTimeout(localFallback);
+      if (presenceTimer) clearInterval(presenceTimer);
       if (reconnectTimer) clearTimeout(reconnectTimer);
       window.removeEventListener("message", onVdoMessage);
       dataFrame.remove();
@@ -86,14 +104,14 @@ export function useSignalChannel(room: string, onMessage: (message: SignalMessag
       channel.close();
       socketRef.current?.close();
     };
-  }, [room]);
+  }, [room, connectionAttempt]);
 
   const send = useCallback((message: SignalMessage) => {
     seenRef.current.add(message.id);
     latestRef.current = message;
     channelRef.current?.postMessage(message);
     const transmit = () => {
-      dataFrameRef.current?.contentWindow?.postMessage({ sendData: { takoSignal: message }, type: "pcs" }, "https://vdo.ninja");
+      dataFrameRef.current?.contentWindow?.postMessage({ sendData: { takoSignal: message } }, "https://vdo.ninja");
       const socket = socketRef.current;
       if (socket?.readyState === WebSocket.OPEN) {
         try { socket.send(JSON.stringify(message)); return; } catch { /* retry below */ }
@@ -108,5 +126,10 @@ export function useSignalChannel(room: string, onMessage: (message: SignalMessag
     window.setTimeout(transmit, 700);
   }, []);
 
-  return { connection, send };
+  const reconnect = useCallback(() => {
+    setConnection("connecting");
+    setConnectionAttempt(attempt => attempt + 1);
+  }, []);
+
+  return { connection, send, reconnect };
 }

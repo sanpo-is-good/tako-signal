@@ -258,6 +258,9 @@ a { color: inherit; text-decoration: none; }
   font: 650 9px/1 var(--mono);
   letter-spacing: .06em;
 }
+.connection-control { display:inline-flex; align-items:center; gap:7px; }
+.connection-reconnect { min-height:30px; padding:0 11px; border:1px solid currentColor; border-radius:999px; background:transparent; color:inherit; font:800 9px/1 ui-monospace,monospace; letter-spacing:.08em; cursor:pointer; touch-action:manipulation; }
+.connection-reconnect:active { transform:scale(.96); }
 .connection-pill i, .kitchen-presence i {
   width: 7px;
   height: 7px;
