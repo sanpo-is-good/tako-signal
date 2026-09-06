@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { ConnectionPill } from "../components/ConnectionPill";
 import { SignalPlate } from "../components/SignalPlate";
-import { useSignalChannel } from "../hooks/useSignalChannel";
+import { SIGNAL_RELAY_URL_KEY, useSignalChannel } from "../hooks/useSignalChannel";
 import {
   ACTIONS,
   DEFAULT_ROOM,
@@ -25,6 +25,7 @@ const SIGNAL_DURATION_MS = 1800;
 export default function KitchenPage() {
   const [room, setRoom] = useState(DEFAULT_ROOM);
   const [roomInput, setRoomInput] = useState(DEFAULT_ROOM);
+  const [relayUrlInput, setRelayUrlInput] = useState("");
   const [current, setCurrent] = useState<SignalMessage | null>(null);
   const [traceCues, setTraceCues] = useState<SignalMessage[]>([]);
   const [calibration, setCalibration] = useState(false);
@@ -41,6 +42,7 @@ export default function KitchenPage() {
     const savedTransform = localStorage.getItem("tako-projector-transform");
     setRoom(initialRoom);
     setRoomInput(initialRoom);
+    setRelayUrlInput(localStorage.getItem(SIGNAL_RELAY_URL_KEY) || "");
     setHoleOffsets(parseHoleOffsets(localStorage.getItem(HOLE_OFFSETS_KEY)));
     if (savedTransform) {
       try { setTransform({ ...DEFAULT_TRANSFORM, ...JSON.parse(savedTransform) }); } catch { /* use defaults */ }
@@ -80,11 +82,15 @@ export default function KitchenPage() {
 
   const applyRoom = () => {
     const next = sanitizeRoom(roomInput);
+    const relayUrl = relayUrlInput.trim();
     setRoom(next);
     setRoomInput(next);
     setCurrent(null);
     setTraceCues([]);
     localStorage.setItem("tako-room", next);
+    if (relayUrl) localStorage.setItem(SIGNAL_RELAY_URL_KEY, relayUrl);
+    else localStorage.removeItem(SIGNAL_RELAY_URL_KEY);
+    reconnect();
     const basePath = window.location.pathname.startsWith("/tako-signal/") ? "/tako-signal" : "";
     window.history.replaceState(null, "", `${basePath}/kitchen?room=${encodeURIComponent(next)}`);
   };
@@ -127,7 +133,8 @@ export default function KitchenPage() {
       {settingsOpen && (
         <section className="settings-drawer kitchen-settings">
           <label><span>ルームID</span><div className="inline-field"><input value={roomInput} onChange={event => setRoomInput(event.target.value)} /><button onClick={applyRoom}>接続</button></div></label>
-          <div className="settings-note">新しい合図は待たずに即時表示されます。職人のボタン操作は必要ありません。</div>
+          <label><span>Signal Relay</span><input value={relayUrlInput} onChange={event => setRelayUrlInput(event.target.value)} placeholder="https://tako-signal-relay.…workers.dev" /></label>
+          <div className="settings-note">操作信号はWebSocket Relayで受信します。VDO.Ninjaは映像専用です。</div>
         </section>
       )}
 

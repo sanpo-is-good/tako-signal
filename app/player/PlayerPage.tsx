@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { ConnectionPill } from "../components/ConnectionPill";
 import { PlayerControls } from "../components/PlayerControls";
 import { SignalPlate } from "../components/SignalPlate";
-import { useSignalChannel } from "../hooks/useSignalChannel";
+import { SIGNAL_RELAY_URL_KEY, useSignalChannel } from "../hooks/useSignalChannel";
 import {
   ACTIONS,
   DEFAULT_ROOM,
@@ -26,6 +26,7 @@ export default function PlayerPage() {
   const [room, setRoom] = useState(DEFAULT_ROOM);
   const [roomInput, setRoomInput] = useState(DEFAULT_ROOM);
   const [streamId, setStreamId] = useState("takokuri1");
+  const [relayUrlInput, setRelayUrlInput] = useState("");
   const [selectedHole, setSelectedHole] = useState<number>();
   const [mode, setMode] = useState<GameMode>("control");
   const [action, setAction] = useState<ActionKind>("batter");
@@ -40,6 +41,7 @@ export default function PlayerPage() {
     setRoom(initialRoom);
     setRoomInput(initialRoom);
     setStreamId(params.get("stream") || localStorage.getItem("tako-stream") || "takokuri1");
+    setRelayUrlInput(localStorage.getItem(SIGNAL_RELAY_URL_KEY) || "");
     setHoleOffsets(parseHoleOffsets(localStorage.getItem(HOLE_OFFSETS_KEY)));
     const onStorage = (event: StorageEvent) => {
       if (event.key === HOLE_OFFSETS_KEY) setHoleOffsets(parseHoleOffsets(event.newValue));
@@ -82,9 +84,13 @@ export default function PlayerPage() {
 
   const applySettings = () => {
     const next = sanitizeRoom(roomInput);
+    const relayUrl = relayUrlInput.trim();
     setRoom(next);
     localStorage.setItem("tako-room", next);
     localStorage.setItem("tako-stream", streamId);
+    if (relayUrl) localStorage.setItem(SIGNAL_RELAY_URL_KEY, relayUrl);
+    else localStorage.removeItem(SIGNAL_RELAY_URL_KEY);
+    reconnect();
     setSettingsOpen(false);
   };
 
@@ -105,6 +111,7 @@ export default function PlayerPage() {
         <section className="tk-settings">
           <label>ROOM<input value={roomInput} onChange={event => setRoomInput(event.target.value)} /></label>
           <label>VDO.NINJA STREAM<input value={streamId} onChange={event => setStreamId(event.target.value)} /></label>
+          <label>SIGNAL RELAY<input value={relayUrlInput} onChange={event => setRelayUrlInput(event.target.value)} placeholder="https://tako-signal-relay.…workers.dev" /></label>
           <button onClick={applySettings}>反映する</button>
           <Link href="/debug">横5×縦4 位置調整 ↗</Link>
           <Link href={`/kitchen?room=${encodeURIComponent(room)}`}>投映画面 ↗</Link>

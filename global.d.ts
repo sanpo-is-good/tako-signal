@@ -9,3 +9,11 @@ interface Fetcher {
 interface D1Database {
   readonly __brand?: "D1Database";
 }
+
+interface ImportMetaEnv {
+  readonly VITE_SIGNAL_RELAY_URL?: string;
+}
+
+interface ImportMeta {
+  readonly env: ImportMetaEnv;
+}
