@@ -93,6 +93,32 @@ actions tied to the current ChatGPT user. Leave public content anonymous.
 - `npm run build`: verify the vinext build output
 - `npm test`: build the starter and verify its rendered loading skeleton
 - `npm run db:generate`: generate Drizzle migrations after schema changes
+- `npm run deploy:relay`: deploy the TAKO SIGNAL WebSocket relay to Cloudflare Workers
+
+## TAKO SIGNAL realtime architecture
+
+Video and game-control traffic are intentionally separated:
+
+- Video stays on VDO.Ninja / WebRTC.
+- Player commands, projector state, and Tetris state use the WebSocket relay when configured.
+- `BroadcastChannel` remains available for same-browser-tab communication.
+- If no WebSocket relay URL is configured, the legacy VDO.Ninja data-only relay remains as a compatibility fallback.
+
+The relay is implemented by `worker/signal-relay.mjs` and one SQLite-backed Cloudflare Durable Object per room. Deploy it with:
+
+```bash
+npm run deploy:relay
+```
+
+For GitHub Actions deployment, add repository secrets `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID`, then run the **Deploy Signal Relay** workflow manually.
+
+After deployment, use the Worker origin such as `https://<worker>.<subdomain>.workers.dev` as the signal relay URL. You can either:
+
+1. Enter the URL in the **SIGNAL RELAY** field on both the Player and Kitchen devices. It is saved to local storage on each device.
+2. Set a GitHub Actions repository variable named `SIGNAL_RELAY_URL`. The GitHub Pages workflow exposes it as `VITE_SIGNAL_RELAY_URL`, so every client uses the relay automatically after the next Pages deployment.
+3. Add `?signalRelay=https://<worker>.<subdomain>.workers.dev` to a page URL for a one-page override.
+
+The client converts `https://...` to `wss://.../ws?room=<room>` automatically. Once a relay URL is present, the hidden VDO.Ninja data-only iframe is not created, so VDO.Ninja is video-only.
 
 ## Learn More
 
